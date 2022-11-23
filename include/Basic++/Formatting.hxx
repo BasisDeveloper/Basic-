@@ -345,7 +345,7 @@ namespace Basic::Formatting
 			else if (type_informations[index].type_hash == typeid(unsigned char).hash_code())
 			{
 				std::string out_character;
-				out_character += *(char*)ptrs_to_args_data[index];
+				out_character += *(unsigned char*)ptrs_to_args_data[index];
 				return out_character;
 			}
 			else if (type_informations[index].type_hash == typeid(signed char).hash_code())
