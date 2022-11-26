@@ -1,7 +1,7 @@
 #include "Basic++/Sys.hpp"
 #include "Basic++/Expectations.hxx"
 #include "Basic++/Common.hxx"
-#include "win32/Win32.hpp"
+#include "Basic++/win32/Win32.hpp"
 
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>

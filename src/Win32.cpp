@@ -1,4 +1,4 @@
-#include "win32/Win32.hpp"
+#include "Basic++/win32/Win32.hpp"
 #include "Basic++/Expectations.hxx"
 #include "Basic++/Common.hxx"
 #include <dbghelp.h>

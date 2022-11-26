@@ -25,10 +25,12 @@ set(HEADERS
     ${INCLUDE_DIR}/PCH.hxx
     ${INCLUDE_DIR}/Sys.hpp
     ${INCLUDE_DIR}/TypeName.hxx
+    ${INCLUDE_DIR}/win32/Win32.hpp
         )
 
 set(SOURCES
     src/Sys.cpp
+    src/Win32.cpp
     )
 
 add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
@@ -42,4 +44,5 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
 set(CXX_STANDARD_REQUIRED ON)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include/)
+target_link_libraries(${PROJECT_NAME} PUBLIC dbghelp)
 target_include_directories(${PROJECT_NAME} PUBLIC win32/include/)
