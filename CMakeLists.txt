@@ -26,6 +26,7 @@ set(HEADERS
     ${INCLUDE_DIR}/Sys.hpp
     ${INCLUDE_DIR}/TypeName.hxx
     ${INCLUDE_DIR}/win32/Win32.hpp
+    ${INCLUDE_DIR}/FileFriend.hxx
         )
 
 set(SOURCES
