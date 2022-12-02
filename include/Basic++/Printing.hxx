@@ -30,23 +30,23 @@ namespace Basic::Printing
         Println(stdout, msg, arguments...);
     }
 
-    void Print(auto string)
+    void Print(auto value)
     {
-        Print(stdout, "{}", string);
+        Print(stdout, "{}", value);
     }
 
-    void Println(auto string)
+    void Println(auto value)
     {
-        Println(stdout, "{}", string);
+        Println(stdout, "{}", value);
     }
 
-    void Print(FILE* stream, auto string)
+    void Print(FILE* stream, auto value)
     {
-        Print(stream, "{}", string);
+        Print(stream, "{}", value);
     }
 
-    void Println(FILE* stream, auto string)
+    void Println(FILE* stream, auto value)
     {
-        Println(stream, "{}", string);
+        Println(stream, "{}", value);
     }
 };
