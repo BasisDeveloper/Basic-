@@ -3,8 +3,8 @@
 #include <source_location>
 #include <filesystem>
 
-#include "Print.hxx"
-#include "Message.hxx"
+#include "Basic++/Printing.hxx"
+#include "Basic++/Message.hxx"
 
 // TODO: This should be here, but it's easy to remove once it REALLY doesn't need to be here... so.
 #define WIN32_MEAN_AND_LEAN
@@ -26,14 +26,14 @@ namespace Basic
 	{
 		if (!condition) [[unlikely]]
 		{
-			Basic::Logging::Print("expectation not satisfied : {}", msg.string.data());
+			Basic::Printing::Print("expectation not satisfied : {}", msg.string.data());
 
 			const auto file_name =
 				std::filesystem::path(source_location.file_name()).filename().string();
 
 			const char* function_name = source_location.function_name();
 
-			Basic::Logging::Println(" ~ file:'{}', function:'{}', line:'{}:{}'",
+			Basic::Printing::Println(" ~ file:'{}', function:'{}', line:'{}:{}'",
 				file_name.data(), function_name, source_location.line(), source_location.column());
 		}
 

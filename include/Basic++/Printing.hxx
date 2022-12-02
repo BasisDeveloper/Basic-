@@ -2,7 +2,7 @@
 #include "Formatting.hxx"
 #include <cstdio>
 
-namespace Basic::Logging
+namespace Basic::Printing
 {
     template <size_t N_Characters, Formatting::Formattable... formatables_t>
     void Print(FILE* stream, char const (&msg)[N_Characters], formatables_t... arguments)
@@ -28,5 +28,25 @@ namespace Basic::Logging
     void Println(char const (&msg)[N_Characters], formatables_t... arguments)
     {
         Println(stdout, msg, arguments...);
+    }
+
+    void Print(auto string)
+    {
+        Print(stdout, "{}", string);
+    }
+
+    void Println(auto string)
+    {
+        Println(stdout, "{}", string);
+    }
+
+    void Print(FILE* stream, auto string)
+    {
+        Print(stream, "{}", string);
+    }
+
+    void Println(FILE* stream, auto string)
+    {
+        Println(stream, "{}", string);
     }
 };

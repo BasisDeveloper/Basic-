@@ -19,7 +19,7 @@ set(HEADERS
     ${INCLUDE_DIR}/Defines.hxx
     ${INCLUDE_DIR}/Expectations.hxx
     ${INCLUDE_DIR}/Formatting.hxx
-    ${INCLUDE_DIR}/Print.hxx
+    ${INCLUDE_DIR}/Printing.hxx
     ${INCLUDE_DIR}/Mathematics.hxx
     ${INCLUDE_DIR}/Message.hxx
     ${INCLUDE_DIR}/PCH.hxx

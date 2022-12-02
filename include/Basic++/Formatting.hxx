@@ -37,6 +37,7 @@ namespace Basic::Formatting
 		or std::is_same<erase_const<T>, char*>::value
 		or std::is_same<erase_const<T>, char[]>::value
 		or std::is_same<erase_const<T>, std::string>::value
+		or std::is_same<erase_const<T>, std::string_view>::value
 		or std::is_pointer<T>::value;
 
 	template<typename T>
@@ -57,224 +58,8 @@ namespace Basic::Formatting
 		bool raw_pointer;
 	};
 
-	/* TODO: There was a compile time version, where in which the msg was a compile time char array, but,
-			 I don't want to make two overloads for a non-compile time version of a char*, so, let's just always
-			 do it at runtime... Sorry, old code below. */
-	#if 0
 	/* We need an overload that doesn't take any arguments, so user template code is easier,
-	* and it's possible to just to ` Format("Hello") `;
-	*/
-	template <size_t N_Characters, Formattable... formatables_t>
-	std::string Format(char const (&msg)[N_Characters])
-	{
-		return std::string(msg);
-	}
-	template <size_t N_Characters, Formattable... formatables_t>
-	std::string Format(char const (&msg)[N_Characters], formatables_t... args)
-	{
-		auto min = [](const auto& a, const auto& b) {return __min(a, b);};
-		auto character_is_number = [](const char& c) { return c >= '0' and c <= '9'; };
-		constexpr size_t msg_length = N_Characters;
-		const char* msg_end = msg + msg_length;
-
-		const FormattableTypeInformation type_informations[sizeof...(args)] =
-		{
-			(FormattableTypeInformation
-			{
-				.type_hash = typeid(decltype(std::remove_extent_t<erase_const<decltype(args)>>())).hash_code(),
-
-				.raw_pointer = std::is_pointer<decltype(args)>()
-							   and !(std::is_same_v<decltype(args), const char*>
-									 or std::is_same_v<decltype(args), char*>)
-			})...
-		};
-
-		const void* const ptrs_to_args_data[sizeof...(args)]{ _Get_Address_If_Needed<decltype(args)>(args)... };
-
-
-		/* When you use the {} syntax for substitution,
-		   for each time it's found, we print the next element in the args.
-		   Format("{} {}", "Hello", "World") > "Hello World" */
-		size_t ptrs_handled_count = 0;
-
-		std::string out_formatted = {};
-
-		constexpr const char failure_string[] = "`FAIL`";
-
-		auto Get_Format_Substitution = [&](size_t index) -> std::string
-		{
-			auto Number_To_String = [&index, &ptrs_to_args_data]<typename T>(T number) -> std::string
-			{
-				char num_buffer[256] = {};
-				auto [_, ec] = std::to_chars(num_buffer, num_buffer + sizeof(num_buffer), *(T*)ptrs_to_args_data[index]);
-				assert(ec == std::errc() && "failure parsing number.");
-				return std::string(num_buffer);
-			};
-
-			if (type_informations[index].raw_pointer == true)
-			{
-				char num_buffer[256] = {};
-				auto [_, ec] = std::to_chars(num_buffer, num_buffer + sizeof(num_buffer), (int64_t)ptrs_to_args_data[index], 16); // 16 because we want hexadecimal.
-				assert(ec == std::errc() && "failure parsing number.");
-				return std::string(num_buffer);
-			}
-
-			if (type_informations[index].type_hash == typeid(char*).hash_code())
-			{
-				return std::string((char*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(char).hash_code())
-			{
-				std::string out_character;
-				out_character += *(char*)ptrs_to_args_data[index];
-				return out_character;
-			}
-			else if (type_informations[index].type_hash == typeid(unsigned char).hash_code())
-			{
-				std::string out_character;
-				out_character += *(char*)ptrs_to_args_data[index];
-				return out_character;
-			}
-			else if (type_informations[index].type_hash == typeid(signed char).hash_code())
-			{
-				std::string out_character;
-				out_character += *(char*)ptrs_to_args_data[index];
-				return out_character;
-			}
-
-			if (type_informations[index].type_hash == typeid(int).hash_code())
-			{
-				return Number_To_String(*(int*)ptrs_to_args_data[index]);
-			}
-			else if (type_informations[index].type_hash == typeid(unsigned int).hash_code())
-			{
-				return Number_To_String(*(unsigned int*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(short).hash_code())
-			{
-				return Number_To_String(*(short*)ptrs_to_args_data[index]);
-			}
-			else if (type_informations[index].type_hash == typeid(unsigned short).hash_code())
-			{
-				return Number_To_String(*(unsigned short*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(long).hash_code())
-			{
-				return Number_To_String(*(long*)ptrs_to_args_data[index]);
-			}
-			else if (type_informations[index].type_hash == typeid(unsigned long).hash_code())
-			{
-				return Number_To_String(*(unsigned long*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(long long).hash_code())
-			{
-				return Number_To_String(*(long long*)ptrs_to_args_data[index]);
-			}
-			else if (type_informations[index].type_hash == typeid(unsigned long long).hash_code())
-			{
-				return Number_To_String(*(unsigned long long*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(float).hash_code())
-			{
-				return Number_To_String(*(float*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(double).hash_code())
-			{
-				return Number_To_String(*(double*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(long double).hash_code())
-			{
-				return Number_To_String(*(long double*)ptrs_to_args_data[index]);
-			}
-
-			if (type_informations[index].type_hash == typeid(std::string).hash_code())
-			{
-				auto ptr_to_std_string = (std::string*)ptrs_to_args_data[index];
-				return (ptr_to_std_string->data());
-			}
-
-			return std::string(failure_string);
-		};
-
-		const char* head_ptr = msg;
-
-		while (head_ptr != msg_end)
-		{
-			// TODO: So, I need to add some error checking for runtime and compile time.
-
-			const char* look_ahead_ptr = head_ptr;
-
-			if (*look_ahead_ptr == '{')
-			{
-				look_ahead_ptr += 1;
-
-				if (*(look_ahead_ptr) == '}')
-				{
-					std::string substitution = Get_Format_Substitution(ptrs_handled_count);
-
-					assert(substitution != failure_string && "Received a data type `Format` doesn't understand.");
-
-					out_formatted.append(substitution);
-
-					ptrs_handled_count += 1;
-					head_ptr += (1 + 1); // We want to skip the '{' and the '}', i.e. 1 + 1
-
-					continue;
-				}
-
-				if (character_is_number(*look_ahead_ptr))
-				{
-					std::string num_string;
-
-					for (; character_is_number(*look_ahead_ptr) and look_ahead_ptr != msg_end; look_ahead_ptr++)
-						num_string += *look_ahead_ptr; // incrementing look_ahead_ptr until we hit a non-number, or we hit the end of `msg`.
-
-					if (look_ahead_ptr == msg_end)
-					{
-						head_ptr += 1;
-						continue;
-					}
-
-					if (*look_ahead_ptr != '}')
-					{ // That means that we found {...NUMS... without an ending '}', it wasn't a 
-					  // substitution sequence ({...}), just continue on like nothing happened.
-						head_ptr += 1;
-						continue;
-					}
-
-					auto numeric_characters_to_data_index = atoi(num_string.data());
-
-					std::string substitution = Get_Format_Substitution(numeric_characters_to_data_index);
-
-					assert(substitution != failure_string && "Received a data type `Print` doesn't understand.");
-
-					out_formatted.append(substitution);
-
-					ptrs_handled_count += 1;
-					head_ptr += (1 + 1) + num_string.length();
-
-					continue;
-				}
-			}
-
-			out_formatted += *head_ptr;
-
-			head_ptr += 1;
-		}
-
-		return out_formatted;
-	}
-	#endif
-
-	/* We need an overload that doesn't take any arguments, so user template code is easier,
-	* and it's possible to just to ` Format("Hello") `;
+	 * and it's possible to just to ` Format("Hello") `;
 	*/
 	static std::string Format(const char* msg)
 	{
@@ -302,7 +87,6 @@ namespace Basic::Formatting
 		};
 
 		const void* const ptrs_to_args_data[sizeof...(args)]{ _Get_Address_If_Needed<decltype(args)>(args)... };
-
 
 		/* When you use the {} syntax for substitution,
 		   for each time it's found, we print the next element in the args.
@@ -416,7 +200,13 @@ namespace Basic::Formatting
 
 			if (type_informations[index].type_hash == typeid(std::string).hash_code())
 			{
-				auto ptr_to_std_string = (std::string*)ptrs_to_args_data[index];
+				std::string* ptr_to_std_string = (std::string*)ptrs_to_args_data[index];
+				return (ptr_to_std_string->data());
+			}
+
+			if (type_informations[index].type_hash == typeid(std::string_view).hash_code())
+			{
+				std::string_view* ptr_to_std_string = (std::string_view*)ptrs_to_args_data[index];
 				return (ptr_to_std_string->data());
 			}
 
@@ -482,7 +272,7 @@ namespace Basic::Formatting
 					head_ptr += (1 + 1) + num_string.length();
 
 					continue;
-				}
+}
 			}
 
 			if (*head_ptr != '\0')
