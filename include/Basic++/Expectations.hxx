@@ -16,7 +16,7 @@
 
 namespace Basic
 {
-	#if defined(BASIC_PCH)
+	#if !defined(BASIC_PCH)
 	static
 	#endif
 		bool Expect(
