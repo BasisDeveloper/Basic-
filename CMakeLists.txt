@@ -16,7 +16,7 @@ set(INCLUDE_DIR include/Basic++)
 set(HEADERS 
     ${INCLUDE_DIR}/Common.hxx
     ${INCLUDE_DIR}/Defer.hxx
-    ${INCLUDE_DIR}/Defines.hxx
+    ${INCLUDE_DIR}/NumericAliases.hxx
     ${INCLUDE_DIR}/Expectations.hxx
     ${INCLUDE_DIR}/Formatting.hxx
     ${INCLUDE_DIR}/Printing.hxx
@@ -27,6 +27,7 @@ set(HEADERS
     ${INCLUDE_DIR}/TypeName.hxx
     ${INCLUDE_DIR}/win32/Win32.hpp
     ${INCLUDE_DIR}/FileFriend.hxx
+	${INCLUDE_DIR}/Expected.hxx
         )
 
 set(SOURCES

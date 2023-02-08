@@ -20,7 +20,7 @@ std::string win32::Undecorate_Module_Symbol_Name(const std::string& decorated_na
 	auto undecorated_char_count = UnDecorateSymbolName(
 		decorated_name.c_str(), und_name, sizeof(und_name), flags);
 
-	Expect(undecorated_char_count > 0, { "Function '{}' failed.", stringify(UnDecorateSymbolName) });
+	Basic::Expectations::Expect(undecorated_char_count > 0, { "Function '{}' failed.", stringify(UnDecorateSymbolName) });
 
 	return { und_name };
 };
@@ -103,7 +103,7 @@ std::string win32::ReadEntireFile(HANDLE handle_to_file)
 
 std::vector<std::string> win32::Extract_Module_Export_Symbols(HMODULE hModule)
 {
-	Basic::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
+	Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
 		{ "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
 
 	auto enumeration_callback = [](
@@ -126,7 +126,7 @@ std::vector<std::string> win32::Extract_Module_Export_Symbols(HMODULE hModule)
 
 std::vector<win32::ExportSymbol> win32::Extract_Module_Export_Symbols_Ordinal(HMODULE hModule)
 {
-	Basic::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
+	Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
 		{ "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
 
 	auto enumeration_callback = [](

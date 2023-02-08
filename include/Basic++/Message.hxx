@@ -1,25 +1,27 @@
 #pragma once
 
 #include <string>
+#include <cstddef>
 #include "Formatting.hxx"
 
 namespace Basic
 {
-	struct Message
-	{
-		std::string string;
+    struct Message
+    {
+        using ConstStringReference = char const(&)[];
 
-		template<size_t N_Characters, typename ...T>
-		constexpr Message(char const (&msg)[N_Characters], T&& ...args)
-		{
-			if constexpr (sizeof...(args) > 0)
-				string = Basic::Formatting::Format(msg, args...);
-		}
+        std::string string;
 
-		template<size_t N_Characters>
-		constexpr Message(char const (&msg)[N_Characters])
-		{
-			string = Basic::Formatting::Format(msg);
-		}
-	}; 
+        template<typename ...T>
+        constexpr Message(const ConstStringReference& msg, T&& ...args)
+        {
+            if constexpr (sizeof...(args) > 0)
+                string = Basic::Formatting::Format(msg, args...);
+        }
+
+        constexpr Message(const ConstStringReference& msg)
+        {
+            string = Basic::Formatting::Format(msg);
+        }
+    };
 }
