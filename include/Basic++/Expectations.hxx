@@ -23,15 +23,15 @@ namespace Basic
     {
         #if !defined(BASIC_PCH)
         static
-            #endif
-            bool Expect(
-                bool condition,
-                const Message&& msg,
-                const std::source_location& source_location = std::source_location::current())
+        #endif
+        bool Expect(
+            bool condition,
+            const Message&& msg,
+            const std::source_location& source_location = std::source_location::current())
         {
             if (!condition) [[unlikely]]
             {
-                Basic::Printing::Print("expectation not satisfied : {}", msg.string.data());
+                Basic::Printing::Print("expectation not satisfied : '{}'", msg.string.data());
 
                 const auto file_name =
                     std::filesystem::path(source_location.file_name()).filename().string();
@@ -47,13 +47,13 @@ namespace Basic
 
         #if !defined(BASIC_PCH)
         static
-            #endif
-            template<typename T>
+        #endif
+        template<typename T>
         bool Expect(
             Expected<T> expected,
             const std::source_location& source_location = std::source_location::current())
         {
-            return Expect(expected == true, Message{ expected.completion_status }, source_location);
+            return Expect(expected == true, Message{ expected.status }, source_location);
         }
     }
 }
@@ -64,9 +64,8 @@ namespace Basic
 			BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE);									               \
 		}; 																					               
 
-#define EEXPECT(_expected_)                                                         \
-        if (!Basic::Expectations::Expect<decltype(_expected_)::Type>(_expected_,    \
-                                 std::source_location::current()))                  \
-        {                                                                           \
-            BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE);                           \
-        }                                                                           \
+#define EEXPECT(_expected_)                                                                                        \
+        if (!Basic::Expectations::Expect<decltype(_expected_)::Type>(_expected_, std::source_location::current())) \
+        {                                                                                                          \
+            BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE);                                                          \
+        }                                                                                                          \

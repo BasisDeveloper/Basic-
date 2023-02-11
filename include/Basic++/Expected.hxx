@@ -1,60 +1,60 @@
+/* Mission: Is to create "zero" cost abstarction for error reporting. */
+
 #pragma once
 
 #include <utility>
-#include <cstddef>
-#include <type_traits>
-
-// Function Complete Message?
-// Function Complete Message?
-// Routine Completion Status
-// Completion Status ☑️
 
 namespace Basic::Expectations
 {
-    template<typename T>
+    template<typename T = void>
     struct Expected
     {
         using Type = T;
-
-        T* _value;
-
-        // T& value = *_value;
-
+        
         using ConstStringReference = char const(&)[];
 
-        ConstStringReference completion_status;
+        T value;
 
-        constexpr Expected(const Expected<T>& other) = delete;
+        ConstStringReference status = "^(AOK)";
 
-        T& operator->() const { return *_value; }
+        Expected() = default;
 
-        T& operator* () const { return *_value; }
+        Expected(T&& _value):
+            value(std::move(_value))
+        {}
 
-        constexpr Expected(T& _val):
-            _value(&_val),
-            completion_status("^(empty)") {}
+        Expected(T&& _value, ConstStringReference msg):
+            value(std::move(_value)),
+            status(msg)
+        {}
 
-        constexpr Expected(T* _val) :
-            _value(std::move(_val)),
-            completion_status("^(empty)") {}
+        T* operator->() { return &value; }
+        T& operator* () { return value; }
 
-        constexpr Expected(T&& _val) :
-            _value(&_val),
-            completion_status("^(empty)") {}
-        
-        constexpr Expected(T& _val, ConstStringReference csr) requires (not std::is_pointer_v<T>) :
-            _value(&_val),
-            completion_status(csr) {}
-
-        constexpr Expected(T&& _val, ConstStringReference csr) requires (not std::is_pointer_v<T>) :
-            _value(&_val), completion_status{ csr } {}
-
-        constexpr Expected(T* _val, ConstStringReference csr) requires (std::is_pointer_v<T>) :
-            _value(std::move(_val)), completion_status{ csr } {}
-
-        operator bool() const
+        constexpr operator bool() const
         {
-            return completion_status[0] == '^';
+            return status[0] == '^';
+        }
+    };
+
+    template<>
+    struct Expected<void>
+    {
+        using Type = void;
+        
+        using ConstStringReference = char const(&)[];
+
+        ConstStringReference status = "^(AOK)";
+
+        Expected() = default;
+
+        Expected(ConstStringReference msg):
+            status(msg)
+        {}
+
+        constexpr operator bool() const
+        {
+            return status[0] == '^';
         }
     };
 }
