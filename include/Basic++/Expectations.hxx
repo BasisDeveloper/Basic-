@@ -21,7 +21,7 @@ namespace Basic
 {
     namespace Expectations
     {
-        #if !defined(BASIC_PCH)
+        #if defined(BASIC_PCH)
         static
         #endif
         bool Expect(
