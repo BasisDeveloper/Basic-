@@ -4,145 +4,155 @@
 #include <dbghelp.h>
 
 using namespace Basic;
+using namespace Basic::Formatting;
 using namespace win32;
 
 HMODULE win32::Load_DLL(const std::filesystem::path& dll_path)
 {
-	auto module_handle = LoadLibraryA(dll_path.string().c_str());
+    auto module_handle = LoadLibraryA(dll_path.string().c_str());
 
-	return module_handle;
+    return module_handle;
 }
 
 std::string win32::Undecorate_Module_Symbol_Name(const std::string& decorated_name, uint32_t flags)
 {
-	char und_name[1000];
+    char und_name[1000];
 
-	auto undecorated_char_count = UnDecorateSymbolName(
-		decorated_name.c_str(), und_name, sizeof(und_name), flags);
+    auto undecorated_char_count = UnDecorateSymbolName(
+        decorated_name.c_str(), und_name, sizeof(und_name), flags);
 
-	Basic::Expectations::Expect(undecorated_char_count > 0, { "Function '{}' failed.", stringify(UnDecorateSymbolName) });
+    Basic::Expectations::Expect(undecorated_char_count > 0, { "Function '{}' failed.", stringify(UnDecorateSymbolName) });
 
-	return { und_name };
+    return { und_name };
 };
 
 HANDLE win32::Get_Handle(
-	const std::filesystem::path& path_to_file,
-	const FileShareFlags& fsf,
-	const CreationDisposition& cd)
+    const std::filesystem::path& path_to_file,
+    const FileShareFlags& fsf,
+    const CreationDisposition& cd)
 {
-	HANDLE handle = CreateFileA(
-		path_to_file.string().c_str(),
-		GENERIC_READ | GENERIC_WRITE,
-		(DWORD)fsf,
-		NULL,
-		(DWORD)cd,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
+    HANDLE handle = CreateFileA(
+        path_to_file.string().c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        (DWORD)fsf,
+        NULL,
+        (DWORD)cd,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
 
-	);
+    );
 
-	return handle;
+    return handle;
 }
 
 void win32::Error_Exit(LPCTSTR function_name, const std::source_location& location)
 {
-	LPVOID lpMsgBuf{}; // Error message
-	LPVOID lpDisplayBuf{};
-	DWORD dw = GetLastError(); // Error code
+    LPTSTR err_msg_buffer_ptr = nullptr;        // Error message
+    DWORD last_error_code = GetLastError();     // Error code
 
-	FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM |
-		FORMAT_MESSAGE_IGNORE_INSERTS,
-		NULL,
-		dw,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPTSTR)&lpMsgBuf,
-		0, NULL);
+    FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        last_error_code,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR)&err_msg_buffer_ptr,
+        0,
+        NULL);
 
-	lpDisplayBuf = (LPVOID)LocalAlloc(LMEM_ZEROINIT, (lstrlen((LPCTSTR)lpMsgBuf) + lstrlen((LPCTSTR)function_name) + 45) * sizeof(TCHAR));
+    if (err_msg_buffer_ptr[strlen(err_msg_buffer_ptr) - 1] == '\n')
+        err_msg_buffer_ptr[strlen(err_msg_buffer_ptr) - 2] = 0;
 
-	StringCchPrintf((LPTSTR)lpDisplayBuf, LocalSize(lpDisplayBuf) / sizeof(TCHAR), TEXT("%s\n\nfailed with error %d: %s\nline %lld, column %lld\n"), function_name, dw, lpMsgBuf, location.line(), location.column());
+    defer{ LocalFree(err_msg_buffer_ptr); };
 
-	MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
+    std::string display_msg = Format("statment \"{}\"\n\nfailed with error '{}', code ({}).\n\ncolumn:{}, line:{}.\n\nfile: '{}',\n\nfunction: '{}'...",
+        function_name,
+        (LPTSTR)err_msg_buffer_ptr,
+        last_error_code,
+        location.column(),
+        location.line(),
+        location.file_name(),
+        location.function_name());
 
-	LocalFree(lpMsgBuf);
+    auto header_msg = Format("failure in '{}' (`WIN32_CHECK`)", location.function_name());
 
-	ExitProcess(EXIT_FAILURE);
+    ::MessageBoxA(NULL, display_msg.data(), header_msg.data(), MB_OK | MB_ICONSTOP);
+
+    ::ExitProcess(EXIT_FAILURE);
 }
-
 
 std::string win32::ReadEntireFile(HANDLE handle_to_file)
 {
-	LARGE_INTEGER file_size{};
+    LARGE_INTEGER file_size{};
 
-	if (!GetFileSizeEx(handle_to_file, &file_size))
-		return { "~GetFileSizeEx Failed~" };
+    if (!GetFileSizeEx(handle_to_file, &file_size))
+        return { "~GetFileSizeEx Failed~" };
 
-	// FIXME: this might be a memory leak, but I feel like std::move should make the
-	// 		  string below take ownership of the memory, so... I don't know.
-	char* bytes_returned = new char[file_size.QuadPart];
+    // FIXME: this might be a memory leak, but I feel like std::move should make the
+    // 		  string below take ownership of the memory, so... I don't know.
+    char* bytes_returned = new char[file_size.QuadPart];
 
-	DWORD number_bytes_of_returned = 0;
+    DWORD number_bytes_of_returned = 0;
 
-	if (!ReadFile(
-		handle_to_file,
-		bytes_returned,
-		file_size.QuadPart,
-		&number_bytes_of_returned,
-		NULL)) return { "~ReadFile Failed~" };
+    if (!ReadFile(
+        handle_to_file,
+        bytes_returned,
+        file_size.QuadPart,
+        &number_bytes_of_returned,
+        NULL)) return { "~ReadFile Failed~" };
 
-	std::string output = bytes_returned;
+    std::string output = bytes_returned;
 
-	output.resize(number_bytes_of_returned);
+    output.resize(number_bytes_of_returned);
 
-	delete[] bytes_returned;
+    delete[] bytes_returned;
 
-	return output;
+    return output;
 }
 
 std::vector<std::string> win32::Extract_Module_Export_Symbols(HMODULE hModule)
 {
-	Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
-		{ "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
+    Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
+        { "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
 
-	auto enumeration_callback = [](
-		_In_opt_ std::vector<std::string>& export_symbols,
-		_In_ ULONG nOrdinal,
-		_In_opt_ LPCSTR pszName,
-		_In_opt_ PVOID pCode) -> bool
-	{
-		export_symbols.emplace_back(std::string(pszName));
+    auto enumeration_callback = [](
+        _In_opt_ std::vector<std::string>& export_symbols,
+        _In_ ULONG nOrdinal,
+        _In_opt_ LPCSTR pszName,
+        _In_opt_ PVOID pCode) -> bool
+    {
+        export_symbols.emplace_back(std::string(pszName));
 
-		return true;
-	};
+        return true;
+    };
 
-	std::vector<std::string> exports;
+    std::vector<std::string> exports;
 
-	Enumerate_DLL_Exports<std::vector<std::string>&>(hModule, exports, enumeration_callback);
+    Enumerate_DLL_Exports<std::vector<std::string>&>(hModule, exports, enumeration_callback);
 
-	return exports;
+    return exports;
 }
 
 std::vector<win32::ExportSymbol> win32::Extract_Module_Export_Symbols_Ordinal(HMODULE hModule)
 {
-	Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
-		{ "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
+    Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
+        { "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
 
-	auto enumeration_callback = [](
-		_In_opt_ std::vector<win32::ExportSymbol>& export_symbols,
-		_In_ ULONG nOrdinal,
-		_In_opt_ LPCSTR pszName,
-		_In_opt_ PVOID pCode)->bool
-	{
-		export_symbols.emplace_back(win32::ExportSymbol{ std::string(pszName), (std::uint32_t)nOrdinal });
+    auto enumeration_callback = [](
+        _In_opt_ std::vector<win32::ExportSymbol>& export_symbols,
+        _In_ ULONG nOrdinal,
+        _In_opt_ LPCSTR pszName,
+        _In_opt_ PVOID pCode)->bool
+    {
+        export_symbols.emplace_back(win32::ExportSymbol{ std::string(pszName), (std::uint32_t)nOrdinal });
 
-		return true;
-	};
+        return true;
+    };
 
-	std::vector<win32::ExportSymbol> exports;
+    std::vector<win32::ExportSymbol> exports;
 
-	Enumerate_DLL_Exports<std::vector<win32::ExportSymbol>&>(hModule, exports, enumeration_callback);
+    Enumerate_DLL_Exports<std::vector<win32::ExportSymbol>&>(hModule, exports, enumeration_callback);
 
-	return exports;
+    return exports;
 }
