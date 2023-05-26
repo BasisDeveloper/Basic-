@@ -10,8 +10,8 @@ namespace Basic::IO
 {
     using namespace Basic::Expectations;
 
-    enum class FileWriteOptions: std::uint8_t { WriteReplace, WriteAppend };
-    enum class FileReadOptions: std::uint8_t { ReadOSNative, ReadBinary };
+    enum class FileWriteOptions : std::uint8_t { WriteReplace, WriteAppend };
+    enum class FileReadOptions : std::uint8_t { ReadOSNative, ReadBinary };
 
     Expected<> Write_File(
         const std::string_view& file_path,
@@ -78,15 +78,9 @@ namespace Basic::IO
 
         std::rewind(file);
 
-        char* buffer = new char[file_length];
-
-        std::fread(buffer, sizeof(char), file_length, file);
-
-        // FIXME:QUESTION: Does std::move make std::string own the memory? If not, this is a memory leak...
-
-        *contents = std::move(buffer);
-
         contents->resize(file_length);
+
+        std::fread(contents->data(), sizeof(char), file_length, file);
 
         std::fclose(file);
 
