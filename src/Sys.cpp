@@ -121,9 +121,10 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
     std::vector<CHAR> buf;
     buf.reserve(BUFFER_SIZE);
     BOOL bSuccess = FALSE;
-    DWORD amount_read{}, amount_written{}, bytes_available{};
+    DWORD amount_read{}, amount_written{};
+    DWORD bytes_available = 0;
 
-    /* THIS process doesn't use the write-end of the child_pipe_OUT pipe, since we've already created the child process
+    /* WE, OUR process doesn't use the write-end of the child_pipe_OUT pipe, since we've already created the child process
     with the child_pipe_OUT.WRITE open, we can safely close ours because they already have theirs */
     WIN32_CHECK(CloseHandle(child_pipe_OUT.WRITE));
     /* Same reasoning as ↑, this time with child_pipe_ERR */
@@ -131,9 +132,8 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
 
     WIN32_CHECK(WriteFile(child_pipe_IN.WRITE, msg.data(), msg.length(), &amount_written, NULL));
 
-    /* Since this process is done writing data to the child pipe, we MUST close the child_pipe_IN.WRITE to let
-       the child process know what we're done. If we don't, the child will indefinitely
-       wait, forever, blocking our process */
+    /* Since we're done writing data to the child pipe, we MUST close the child_pipe_IN.WRITE to let the child process know what we're done.
+        If we don't, the child will indefinitely wait, forever, blocking our process */
     WIN32_CHECK(CloseHandle(child_pipe_IN.WRITE));
 
     if (wait_for_process_exit_before_read)
@@ -160,18 +160,15 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
              helps us out. But I feel like we don't actually need it, or at least it needs to be used this way. */
             buf.resize(buf.size() + bytes_available);
 
-            // Getting `ReadFile` to read stdout and output it into `buf`.
             bSuccess = ReadFile(child_pipe_OUT.READ, buf.data(), bytes_available, &amount_read, NULL);
 
-            WIN32_CHECK(bSuccess);
-
-            // if (!bSuccess || amount_read <= 0) win32::Error_Exit("ReadFile");
+            if (!bSuccess || amount_read <= 0) win32::Error_Exit("ReadFile");
         }
     }
 
     std_out = std::string(buf.data(), buf.size());
 
-    // Clearing `buf` it here to be able to recycle it later.
+    // Getting read to read stdout
     buf.clear();
 
     while (PeekNamedPipe(child_pipe_ERR.READ,
@@ -185,18 +182,15 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
         {
             buf.resize(buf.size() + bytes_available); // HACK: ⬆️ Look up there for reason.
 
-            // Getting `ReadFile` to read stderr and output it into `buf`.
             bSuccess = ReadFile(child_pipe_ERR.READ, buf.data(), bytes_available, &amount_read, nullptr);
 
-            WIN32_CHECK(bSuccess);
-
-            //if (!bSuccess || amount_read <= 0) win32::Error_Exit("ReadFile");
+            if (!bSuccess || amount_read <= 0) win32::Error_Exit("ReadFile");
         }
     }
 
     std_err = std::string(buf.data(), buf.size());
 
-    std::size_t exit_code{};
+    size_t exit_code{};
 
     WIN32_CHECK(GetExitCodeProcess(process_info.hProcess, (DWORD*)&exit_code));
 

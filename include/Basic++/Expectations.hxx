@@ -23,32 +23,32 @@ namespace Basic
     {
         #if defined(BASIC_PCH)
         static
-        #endif
-        bool Expect(
-            bool condition,
-            const Message&& msg,
-            const std::source_location& source_location = std::source_location::current())
+            #endif
+            bool Expect(
+                bool condition,
+                const Message&& msg,
+                const std::source_location& source_location = std::source_location::current())
         {
             if (!condition) [[unlikely]]
-            {
-                Basic::Printing::Print("expectation not satisfied : '{}'", msg.string.data());
+                {
+                    Basic::Printing::Print("expectation not satisfied : '{}'", msg.string.data());
 
-                const auto file_name =
-                    std::filesystem::path(source_location.file_name()).filename().string();
+                    const auto file_name =
+                        std::filesystem::path(source_location.file_name()).filename().string();
 
-                const char* function_name = source_location.function_name();
+                    const char* function_name = source_location.function_name();
 
-                Basic::Printing::Println(" ~ file:'{}', function:'{}', line:'{}:{}'",
-                    file_name.data(), function_name, source_location.line(), source_location.column());
-            }
+                    Basic::Printing::Println(" ~ file:'{}', function:'{}', line:'{}:{}'",
+                        file_name.data(), function_name, source_location.line(), source_location.column());
+                }
 
-            return condition;
+                return condition;
         }
 
         #if !defined(BASIC_PCH)
         static
-        #endif
-        template<typename T>
+            #endif
+            template<typename T>
         bool Expect(
             Expected<T> expected,
             const std::source_location& source_location = std::source_location::current())
@@ -62,10 +62,16 @@ namespace Basic
         if (!Basic::Expectations::Expect((_cond_), {_msg_, __VA_ARGS__}, std::source_location::current())) \
 		{																					               \
 			BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE);									               \
-		}; 																					               
+		} 																					               
 
-#define EEXPECT(_expected_)                                                                                        \
-        if (!Basic::Expectations::Expect<decltype(_expected_)::Type>(_expected_, std::source_location::current())) \
-        {                                                                                                          \
-            BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE);                                                          \
-        }                                                                                                          \
+// E (Expected) Expect
+#define EEXPECT(_expected_) \
+[&]() { \
+    auto expected = _expected_; \
+    auto expected_value = *expected; \
+    if (!Basic::Expectations::Expect<decltype(_expected_)::Type>(expected, std::source_location::current())) \
+    { \
+        BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE); \
+    } \
+    return expected_value;\
+    }()
