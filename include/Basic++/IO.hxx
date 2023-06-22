@@ -13,14 +13,14 @@ namespace Basic::IO
     enum class FileWriteOptions : std::uint8_t { WriteReplace, WriteAppend };
     enum class FileReadOptions : std::uint8_t { ReadOSNative, ReadBinary };
 
-    Expected<> Write_File(
+    Expected<bool> Write_File(
         const std::string_view& file_path,
         const std::string& to_write,
         FileWriteOptions options = FileWriteOptions::WriteReplace,
         bool binary = true)
     {
         if (file_path.empty())
-            return "supplied invalid `file_path`";
+            return { false,"supplied invalid `file_path`" };
 
         FILE* file;
 
@@ -33,7 +33,7 @@ namespace Basic::IO
             file = std::fopen(file_path.data(), binary ? "ab" : "a");
             break;
         default:
-            return "Unrecognized enum `options` value";
+            return { false, "Unrecognized enum `options` value" };
         }
 
         if (!file) // TODO: I can't really get exact errors, I should probably use the win32 API.
@@ -42,11 +42,11 @@ namespace Basic::IO
         std::size_t bytes_written = std::fwrite(to_write.data(), sizeof(char), to_write.length(), file);
 
         if (bytes_written < to_write.length() or bytes_written < 0)
-            return "couldn't write all bytes from `to_write` to file";
+            return { false, "couldn't write all bytes from `to_write` to file" };
 
         std::fclose(file);
 
-        return {};
+        return true;
     }
 
     Expected<std::string> Read_File(

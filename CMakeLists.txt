@@ -81,7 +81,7 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Basic++Config.cm
     INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Basic++
 )
 
-set(package_version BASIC++_CMAKE_MAJOR_VERSION)
+set(package_version ${BASIC++_MAJOR_VERSION})
 
 set_target_properties(Basic++ PROPERTIES
     VERSION ${package_version}
