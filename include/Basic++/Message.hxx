@@ -13,13 +13,13 @@ namespace Basic
         std::string string;
 
         template<typename ...T>
-        constexpr Message(const ConstStringReference& msg, T&& ...args)
+        constexpr Message(ConstStringReference& msg, T&& ...args)
         {
             if constexpr (sizeof...(args) > 0)
                 string = Basic::Formatting::Format(msg, args...);
         }
 
-        constexpr Message(const ConstStringReference& msg)
+        constexpr Message(ConstStringReference& msg)
         {
             string = Basic::Formatting::Format(msg);
         }

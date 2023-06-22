@@ -1,50 +1,104 @@
-cmake_minimum_required(VERSION 3.24.1)
+cmake_minimum_required(VERSION 3.27.0)
 
 project(Basic++
-        VERSION 0.1
-        LANGUAGES CXX)
+    VERSION 1.0.0
+    LANGUAGES CXX
+    HOMEPAGE_URL https://github.com/BasisDeveloper/BasicPlusPlus)
 
-# Making the output directory unified for all build systems.
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
+set(include_dir include/Basic++)
 
-set(INCLUDE_DIR include/Basic++)
+set(headers
+    ${include_dir}/Common.hxx
+    ${include_dir}/Defer.hxx
+    ${include_dir}/NumericAliases.hxx
+    ${include_dir}/Expectations.hxx
+    ${include_dir}/Formatting.hxx
+    ${include_dir}/Printing.hxx
+    ${include_dir}/Mathematics.hxx
+    ${include_dir}/Message.hxx
+    ${include_dir}/Sys.hpp
+    ${include_dir}/TypeName.hxx
+    ${include_dir}/win32/Win32.hpp
+    ${include_dir}/IO.hxx
+    ${include_dir}/Expected.hxx
+)
 
-set(HEADERS 
-    ${INCLUDE_DIR}/Common.hxx
-    ${INCLUDE_DIR}/Defer.hxx
-    ${INCLUDE_DIR}/NumericAliases.hxx
-    ${INCLUDE_DIR}/Expectations.hxx
-    ${INCLUDE_DIR}/Formatting.hxx
-    ${INCLUDE_DIR}/Printing.hxx
-    ${INCLUDE_DIR}/Mathematics.hxx
-    ${INCLUDE_DIR}/Message.hxx
-    ${INCLUDE_DIR}/PCH.hxx
-    ${INCLUDE_DIR}/Sys.hpp
-    ${INCLUDE_DIR}/TypeName.hxx
-    ${INCLUDE_DIR}/win32/Win32.hpp
-    ${INCLUDE_DIR}/IO.hxx
-	${INCLUDE_DIR}/Expected.hxx
-        )
-
-set(SOURCES
+set(sources
     src/Sys.cpp
     src/Win32.cpp
-    )
+)
 
-add_library(${PROJECT_NAME} STATIC ${HEADERS} ${SOURCES})
+add_library(Basic++ STATIC ${headers} ${sources})
 
-set (PCH_FILE include/Basic++/PCH.hxx)
-target_compile_definitions(${PROJECT_NAME} PUBLIC BASIC_PCH)
-target_precompile_headers(${PROJECT_NAME} PUBLIC ${PCH_FILE})
+target_compile_features(Basic++ PUBLIC cxx_std_20)
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 23)
+target_link_libraries(Basic++ PUBLIC dbghelp)
 
-set(CXX_STANDARD_REQUIRED ON)
+target_include_directories(Basic++
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/win32>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE
+    src/
+)
 
-target_include_directories(${PROJECT_NAME} PUBLIC include/)
-target_link_libraries(${PROJECT_NAME} PUBLIC dbghelp)
-target_include_directories(${PROJECT_NAME} PUBLIC win32/include/)
+# :: INSTALL :: #
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+install(
+    TARGETS Basic++
+    EXPORT Basic++Targets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Basic++_Runtime
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT Basic++_Runtime
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT Basic++_Development
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(
+    DIRECTORY ${include_dir}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/
+    FILES_MATCHING
+    PATTERN "*.hxx"
+    PATTERN "*.hpp"
+    PATTERN "*.h")
+
+install(
+    EXPORT Basic++Targets
+    FILE Basic++Targets.cmake
+    NAMESPACE Basic++::
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Basic++")
+
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Basic++Config.cmake.in
+    "${CMAKE_CURRENT_BINARY_DIR}/Basic++Config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Basic++
+)
+
+set(package_version BASIC++_CMAKE_MAJOR_VERSION)
+
+set_target_properties(Basic++ PROPERTIES
+    VERSION ${package_version}
+    SOVERSION ${package_version}
+    COMPATIBLE_INTERFACE_STRING Basic++_MAJOR_VERSION)
+
+# generate the version file for the config file
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/Basic++ConfigVersion.cmake"
+    VERSION ${package_version}
+    COMPATIBILITY AnyNewerVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/Basic++ConfigVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/Basic++Config.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Basic++"
+)
+
+# https://cmake.org/cmake/help/git-stage/guide/importing-exporting/index.html#exporting-targets-from-the-build-tree
+export(EXPORT Basic++Targets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/Basic++Targets.cmake"
+    NAMESPACE Basic++::
+)
