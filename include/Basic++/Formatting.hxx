@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cassert>
 #include <concepts>
+#include <cstdint>
 #include <typeinfo>
 #include <cmath>
 #include <charconv>
@@ -80,7 +81,7 @@ namespace Basic::Formatting
             (FormattableTypeInformation
             {
                 .type_hash = typeid(decltype(std::remove_extent_t<erase_const<decltype(args)>>())).hash_code(),
-                
+
                 .raw_pointer = std::is_pointer<decltype(args)>()
                                and !(std::is_same_v<decltype(args), const char*>
                                      or std::is_same_v<decltype(args), char*>)
@@ -99,120 +100,120 @@ namespace Basic::Formatting
         constexpr const char failure_string[] = "`FAIL`";
 
         auto Get_Format_Substitution = [&](std::size_t index) -> std::string
-        {
-            auto Number_To_String = [&index, &ptrs_to_args_data]<typename T>(T number) -> std::string
             {
-                char num_buffer[256] = {};
-                auto [_, ec] = std::to_chars(num_buffer, num_buffer + sizeof(num_buffer), *(T*)ptrs_to_args_data[index]);
-                assert(ec == std::errc() && "failure parsing number.");
-                return std::string(num_buffer);
+                auto Number_To_String = [&index, &ptrs_to_args_data]<typename T>(T number) -> std::string
+                {
+                    char num_buffer[256] = {};
+                    auto [_, ec] = std::to_chars(num_buffer, num_buffer + sizeof(num_buffer), *(T*)ptrs_to_args_data[index]);
+                    assert(ec == std::errc() && "failure parsing number.");
+                    return std::string(num_buffer);
+                };
+
+                if (type_informations[index].raw_pointer == true)
+                {
+                    char num_buffer[256] = {};
+                    auto [_, ec] = std::to_chars(num_buffer, num_buffer + sizeof(num_buffer), (std::int64_t)ptrs_to_args_data[index], 16); // 16 because we want hexadecimal.
+                    assert(ec == std::errc() && "failure parsing number.");
+                    return std::string(num_buffer);
+                }
+
+                if (type_informations[index].type_hash == typeid(char*).hash_code())
+                {
+                    return std::string((char*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(char).hash_code())
+                {
+                    std::string out_character;
+                    out_character += *(char*)ptrs_to_args_data[index];
+                    return out_character;
+                }
+                else if (type_informations[index].type_hash == typeid(unsigned char).hash_code())
+                {
+                    std::string out_character;
+                    out_character += *(unsigned char*)ptrs_to_args_data[index];
+                    return out_character;
+                }
+                else if (type_informations[index].type_hash == typeid(signed char).hash_code())
+                {
+                    std::string out_character;
+                    out_character += *(char*)ptrs_to_args_data[index];
+                    return out_character;
+                }
+
+                if (type_informations[index].type_hash == typeid(int).hash_code())
+                {
+                    return Number_To_String(*(int*)ptrs_to_args_data[index]);
+                }
+                else if (type_informations[index].type_hash == typeid(unsigned int).hash_code())
+                {
+                    return Number_To_String(*(unsigned int*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(short).hash_code())
+                {
+                    return Number_To_String(*(short*)ptrs_to_args_data[index]);
+                }
+                else if (type_informations[index].type_hash == typeid(unsigned short).hash_code())
+                {
+                    return Number_To_String(*(unsigned short*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(long).hash_code())
+                {
+                    return Number_To_String(*(long*)ptrs_to_args_data[index]);
+                }
+                else if (type_informations[index].type_hash == typeid(unsigned long).hash_code())
+                {
+                    return Number_To_String(*(unsigned long*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(long long).hash_code())
+                {
+                    return Number_To_String(*(long long*)ptrs_to_args_data[index]);
+                }
+                else if (type_informations[index].type_hash == typeid(unsigned long long).hash_code())
+                {
+                    return Number_To_String(*(unsigned long long*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(float).hash_code())
+                {
+                    return Number_To_String(*(float*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(double).hash_code())
+                {
+                    return Number_To_String(*(double*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(long double).hash_code())
+                {
+                    return Number_To_String(*(long double*)ptrs_to_args_data[index]);
+                }
+
+                if (type_informations[index].type_hash == typeid(bool).hash_code())
+                {
+                    std::string out_string;
+                    bool boolean = *(bool*)ptrs_to_args_data[index];
+                    out_string = boolean == true ? "true" : "false";
+                    return out_string;
+                }
+
+                if (type_informations[index].type_hash == typeid(std::string).hash_code())
+                {
+                    std::string* ptr_to_std_string = (std::string*)ptrs_to_args_data[index];
+                    return (ptr_to_std_string->data());
+                }
+
+                if (type_informations[index].type_hash == typeid(std::string_view).hash_code())
+                {
+                    std::string_view* ptr_to_std_string = (std::string_view*)ptrs_to_args_data[index];
+                    return (ptr_to_std_string->data());
+                }
+
+                return std::string(failure_string);
             };
-
-            if (type_informations[index].raw_pointer == true)
-            {
-                char num_buffer[256] = {};
-                auto [_, ec] = std::to_chars(num_buffer, num_buffer + sizeof(num_buffer), (int64_t)ptrs_to_args_data[index], 16); // 16 because we want hexadecimal.
-                assert(ec == std::errc() && "failure parsing number.");
-                return std::string(num_buffer);
-            }
-
-            if (type_informations[index].type_hash == typeid(char*).hash_code())
-            {
-                return std::string((char*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(char).hash_code())
-            {
-                std::string out_character;
-                out_character += *(char*)ptrs_to_args_data[index];
-                return out_character;
-            }
-            else if (type_informations[index].type_hash == typeid(unsigned char).hash_code())
-            {
-                std::string out_character;
-                out_character += *(unsigned char*)ptrs_to_args_data[index];
-                return out_character;
-            }
-            else if (type_informations[index].type_hash == typeid(signed char).hash_code())
-            {
-                std::string out_character;
-                out_character += *(char*)ptrs_to_args_data[index];
-                return out_character;
-            }
-
-            if (type_informations[index].type_hash == typeid(int).hash_code())
-            {
-                return Number_To_String(*(int*)ptrs_to_args_data[index]);
-            }
-            else if (type_informations[index].type_hash == typeid(unsigned int).hash_code())
-            {
-                return Number_To_String(*(unsigned int*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(short).hash_code())
-            {
-                return Number_To_String(*(short*)ptrs_to_args_data[index]);
-            }
-            else if (type_informations[index].type_hash == typeid(unsigned short).hash_code())
-            {
-                return Number_To_String(*(unsigned short*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(long).hash_code())
-            {
-                return Number_To_String(*(long*)ptrs_to_args_data[index]);
-            }
-            else if (type_informations[index].type_hash == typeid(unsigned long).hash_code())
-            {
-                return Number_To_String(*(unsigned long*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(long long).hash_code())
-            {
-                return Number_To_String(*(long long*)ptrs_to_args_data[index]);
-            }
-            else if (type_informations[index].type_hash == typeid(unsigned long long).hash_code())
-            {
-                return Number_To_String(*(unsigned long long*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(float).hash_code())
-            {
-                return Number_To_String(*(float*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(double).hash_code())
-            {
-                return Number_To_String(*(double*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(long double).hash_code())
-            {
-                return Number_To_String(*(long double*)ptrs_to_args_data[index]);
-            }
-
-            if (type_informations[index].type_hash == typeid(bool).hash_code())
-            {
-                std::string out_string;
-                bool boolean = *(bool*)ptrs_to_args_data[index];
-                out_string = boolean == true ? "true" : "false";
-                return out_string;
-            }
-
-            if (type_informations[index].type_hash == typeid(std::string).hash_code())
-            {
-                std::string* ptr_to_std_string = (std::string*)ptrs_to_args_data[index];
-                return (ptr_to_std_string->data());
-            }
-
-            if (type_informations[index].type_hash == typeid(std::string_view).hash_code())
-            {
-                std::string_view* ptr_to_std_string = (std::string_view*)ptrs_to_args_data[index];
-                return (ptr_to_std_string->data());
-            }
-
-            return std::string(failure_string);
-        };
 
         const char* head_ptr = msg;
 

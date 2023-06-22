@@ -7,8 +7,6 @@
 #include "Basic++/Message.hxx"
 #include "Basic++/Expected.hxx"
 
-// #include "Expected.hxx"
-
 // TODO: This should be here, but it's easy to remove once it REALLY doesn't need to be here... so.
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>
@@ -21,13 +19,10 @@ namespace Basic
 {
     namespace Expectations
     {
-        #if defined(BASIC_PCH)
-        static
-            #endif
-            bool Expect(
-                bool condition,
-                const Message&& msg,
-                const std::source_location& source_location = std::source_location::current())
+        static bool Expect(
+            bool condition,
+            const Message&& msg,
+            const std::source_location& source_location = std::source_location::current())
         {
             if (!condition) [[unlikely]]
                 {
@@ -45,10 +40,7 @@ namespace Basic
                 return condition;
         }
 
-        #if !defined(BASIC_PCH)
-        static
-            #endif
-            template<typename T>
+        template<typename T>
         bool Expect(
             Expected<T> expected,
             const std::source_location& source_location = std::source_location::current())
