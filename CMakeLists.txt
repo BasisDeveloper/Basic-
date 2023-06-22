@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.27.0)
 
+if (TARGET Basic++)
+    return()
+endif()
+
 project(Basic++
     VERSION 1.0.0
     LANGUAGES CXX
