@@ -61,7 +61,7 @@ namespace Basic
 [&]() { \
     auto expected = _expected_; \
     auto expected_value = *expected; \
-    if (!Basic::Expectations::Expect<decltype(_expected_)::Type>(expected, std::source_location::current())) \
+    if (!Basic::Expectations::Expect<typename decltype(_expected_)::Type>(expected, std::source_location::current())) \
     { \
         BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE); \
     } \
