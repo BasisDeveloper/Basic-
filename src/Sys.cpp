@@ -2,9 +2,13 @@
 #include "Basic++/Expectations.hxx"
 #include "Basic++/Common.hxx"
 #include "Basic++/win32/Win32.hpp"
+#include "Basic++/dbg.hxx"
 
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>
+
+#include <cstdlib>
+#include <cstring>
 
 static HANDLE global_job_object = nullptr;
 
@@ -93,7 +97,7 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
 
     char szCmdline[MAX_COMMAND_LENGTH]{};
 
-    strcpy_s(szCmdline, program_command.c_str());
+    std::strcpy(szCmdline, program_command.c_str());
 
     WIN32_CHECK(CreateProcessA(nullptr,
         szCmdline,     // command line
@@ -115,7 +119,7 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
     WIN32_CHECK(CloseHandle(process_info.hThread));
 
     // TODO: Adding Processes to job objects should be easier. AKA, the code should be self-explanatory.
-    WIN32_CHECK(global_job_object and AssignProcessToJobObject(global_job_object, process_info.hProcess));
+    WIN32_CHECK(global_job_object != 0 and AssignProcessToJobObject(global_job_object, process_info.hProcess));
 
     constexpr size_t BUFFER_SIZE = 1000;
     std::vector<CHAR> buf;

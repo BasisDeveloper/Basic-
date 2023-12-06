@@ -20,7 +20,7 @@ std::string win32::Undecorate_Module_Symbol_Name(const std::string& decorated_na
 	auto undecorated_char_count = UnDecorateSymbolName(
 		decorated_name.c_str(), und_name, sizeof(und_name), flags);
 
-	Basic::Expectations::Expect(undecorated_char_count > 0, { "Function '{}' failed.", stringify(UnDecorateSymbolName) });
+	EXPECT(undecorated_char_count > 0, "Function '{}' failed.", stringify(UnDecorateSymbolName));
 
 	return { und_name };
 };
@@ -103,19 +103,19 @@ std::string win32::ReadEntireFile(HANDLE handle_to_file)
 
 std::vector<std::string> win32::Extract_Module_Export_Symbols(HMODULE hModule)
 {
-	Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
-		{ "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
+	EXPECT(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
+		"Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols));
 
 	auto enumeration_callback = [](
 		_In_opt_ std::vector<std::string>& export_symbols,
 		_In_ ULONG nOrdinal,
 		_In_opt_ LPCSTR pszName,
 		_In_opt_ PVOID pCode) -> bool
-	{
-		export_symbols.emplace_back(std::string(pszName));
+		{
+			export_symbols.emplace_back(std::string(pszName));
 
-		return true;
-	};
+			return true;
+		};
 
 	std::vector<std::string> exports;
 
@@ -126,19 +126,19 @@ std::vector<std::string> win32::Extract_Module_Export_Symbols(HMODULE hModule)
 
 std::vector<win32::ExportSymbol> win32::Extract_Module_Export_Symbols_Ordinal(HMODULE hModule)
 {
-	Basic::Expectations::Expect(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
-		{ "Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols) });
+	EXPECT(hModule != nullptr and hModule != INVALID_HANDLE_VALUE,
+		"Invalid handle passed to {}.", stringify(win32::Extract_Module_Export_Symbols));
 
 	auto enumeration_callback = [](
 		_In_opt_ std::vector<win32::ExportSymbol>& export_symbols,
 		_In_ ULONG nOrdinal,
 		_In_opt_ LPCSTR pszName,
 		_In_opt_ PVOID pCode)->bool
-	{
-		export_symbols.emplace_back(win32::ExportSymbol{ std::string(pszName), (std::uint32_t)nOrdinal });
+		{
+			export_symbols.emplace_back(win32::ExportSymbol{ std::string(pszName), (std::uint32_t)nOrdinal });
 
-		return true;
-	};
+			return true;
+		};
 
 	std::vector<win32::ExportSymbol> exports;
 

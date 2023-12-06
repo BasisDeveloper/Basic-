@@ -50,20 +50,31 @@ namespace Basic
     }
 }
 
+#ifndef NO_EXPECTATIONS
+
 #define EXPECT(_cond_, _msg_, ...)                                                                         \
         if (!Basic::Expectations::Expect((_cond_), {_msg_, __VA_ARGS__}, std::source_location::current())) \
 		{																					               \
-			BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE);									               \
+			BASIC_DEBUG_BREAK();                                                                           \
+            std::exit(EXIT_FAILURE);									                                   \
 		} 																					               
 
 // E (Expected) Expect
-#define EEXPECT(_expected_) \
-[&]() { \
-    auto expected = _expected_; \
-    auto expected_value = *expected; \
+#define EEXPECT(_expected_)                                                                                           \
+[&]() {                                                                                                               \
+    auto expected = _expected_;                                                                                       \
+    auto expected_value = *expected;                                                                                  \
     if (!Basic::Expectations::Expect<typename decltype(_expected_)::Type>(expected, std::source_location::current())) \
-    { \
-        BASIC_DEBUG_BREAK(); std::exit(EXIT_FAILURE); \
-    } \
+    {                                                                                                                 \
+        BASIC_DEBUG_BREAK();                                                                                          \
+        std::exit(EXIT_FAILURE);                                                                                      \
+    }                                                                                                                 \
     return expected_value;\
     }()
+
+#else
+
+#define EXPECT(_cond_, _msg_, ...)
+#define EEXPECT(_expected_) *_expected_
+
+#endif

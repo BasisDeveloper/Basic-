@@ -10,7 +10,7 @@
         // do some work...
 
 
-    } // at the end of the scope, the `fclose`  will be called.
+    } // at the end of the scope, the `fclose`  will be called via the defer.
 */
 
 namespace Defer

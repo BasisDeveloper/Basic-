@@ -5,7 +5,7 @@ if (TARGET Basic++)
 endif()
 
 project(Basic++
-    VERSION 1.0.0
+    VERSION 2.0.0
     LANGUAGES CXX
     HOMEPAGE_URL https://github.com/BasisDeveloper/BasicPlusPlus)
 
@@ -13,6 +13,7 @@ set(include_dir include/Basic++)
 
 set(headers
     ${include_dir}/Common.hxx
+    ${include_dir}/dbg.hxx
     ${include_dir}/Defer.hxx
     ${include_dir}/NumericAliases.hxx
     ${include_dir}/Expectations.hxx

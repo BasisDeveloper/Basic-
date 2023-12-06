@@ -90,5 +90,5 @@ namespace Basic::Expectations
         constexpr operator bool() const { return status[0] == '^' or value == true; }
     };
 
-    using Err = Expected<bool>;
+    using Err = Expected<void>;
 }
