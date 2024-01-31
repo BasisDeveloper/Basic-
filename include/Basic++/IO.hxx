@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdio>
 #include <cstddef>
 #include "Basic++/Expectations.hxx"

@@ -1,3 +1,4 @@
+#pragma once
 /* this macro is for conditionally compiling code for
    debug builds. The typical faclities to enable this
    functionality are "#ifdef"s.
