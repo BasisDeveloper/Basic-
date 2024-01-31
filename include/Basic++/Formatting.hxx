@@ -1,6 +1,10 @@
 #pragma once
 
+// TODO: make this work without breaking everything, thanks.
+#ifndef BASIC_FORMATTING_NO_STD_STRING
 #include <string>
+#endif
+
 #include <cstring>
 #include <cassert>
 #include <concepts>

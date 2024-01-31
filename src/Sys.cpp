@@ -2,9 +2,14 @@
 #include "Basic++/Expectations.hxx"
 #include "Basic++/Common.hxx"
 #include "Basic++/win32/Win32.hpp"
+#include "Basic++/dbg.hxx"
 
+#define STRSAFE_NO_DEPRECATE
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>
+
+#include <cstdlib>
+#include <cstring>
 
 static HANDLE global_job_object = nullptr;
 
@@ -45,9 +50,9 @@ void Setup_Global_Job_Handle()
     has_ran_before = true;
 }
 
-Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
-    const std::string& program_command,
-    const std::string_view& msg,
+Basic::Sys::ShellExecuteResult Basic::Sys::Shell_Execute_Write_Then_Read(
+    const std::string& command,
+    const std::string_view& arguments,
     bool wait_for_process_exit_before_read)
 {
     if (global_job_object == nullptr)
@@ -93,7 +98,7 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
 
     char szCmdline[MAX_COMMAND_LENGTH]{};
 
-    strcpy_s(szCmdline, program_command.c_str());
+    std::strcpy(szCmdline, command.c_str());
 
     WIN32_CHECK(CreateProcessA(nullptr,
         szCmdline,     // command line
@@ -115,7 +120,7 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
     WIN32_CHECK(CloseHandle(process_info.hThread));
 
     // TODO: Adding Processes to job objects should be easier. AKA, the code should be self-explanatory.
-    WIN32_CHECK(global_job_object and AssignProcessToJobObject(global_job_object, process_info.hProcess));
+    WIN32_CHECK(global_job_object != 0 and AssignProcessToJobObject(global_job_object, process_info.hProcess));
 
     constexpr size_t BUFFER_SIZE = 1000;
     std::vector<CHAR> buf;
@@ -130,7 +135,7 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
     /* Same reasoning as ↑, this time with child_pipe_ERR */
     WIN32_CHECK(CloseHandle(child_pipe_ERR.WRITE));
 
-    WIN32_CHECK(WriteFile(child_pipe_IN.WRITE, msg.data(), msg.length(), &amount_written, NULL));
+    WIN32_CHECK(WriteFile(child_pipe_IN.WRITE, arguments.data(), arguments.length(), &amount_written, NULL));
 
     /* Since we're done writing data to the child pipe, we MUST close the child_pipe_IN.WRITE to let the child process know what we're done.
         If we don't, the child will indefinitely wait, forever, blocking our process */
@@ -202,4 +207,15 @@ Sys::ShellExecuteResult Sys::Shell_Execute_Write_Then_Read(
     WIN32_CHECK(CloseHandle(process_info.hProcess));
 
     return ShellExecuteResult{ .out = std_out, .err = std_err, .exit_code = exit_code };
+}
+
+Basic::Sys::ShellExecuteResult Basic::Sys::Shell_Execute_Write_Then_Read(
+    const std::string& command,
+    bool wait_for_process_exit_before_read)
+{
+    return Basic::Sys::Shell_Execute_Write_Then_Read(
+        command,
+        "",
+        wait_for_process_exit_before_read
+    );
 }

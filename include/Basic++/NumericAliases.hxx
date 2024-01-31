@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 
 /* You can choose to use these if you like, they're nice :) */

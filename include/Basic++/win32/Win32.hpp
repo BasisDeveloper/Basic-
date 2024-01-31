@@ -1,5 +1,6 @@
 #pragma once
 
+#define STRSAFE_NO_DEPRECATE
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <dbghelp.h>
@@ -24,6 +25,8 @@ namespace win32
 	std::string Undecorate_Module_Symbol_Name(const std::string& decorated_name, uint32_t flags = UNDNAME_COMPLETE);
 
 	HMODULE Load_DLL(const std::filesystem::path& dll_path);
+
+	bool Unload_DLL(const HMODULE& dll);
 
 	std::vector<std::string> Extract_Module_Export_Symbols(HMODULE hModule);
 
@@ -56,9 +59,9 @@ namespace win32
 	{
 		return (FuncT*)(GetProcAddress(module, (LPCSTR)ordinal));
 	}
- 
+
 	template<typename T>
-	using Enumerate_DLL_Exports_Callback = bool (CALLBACK*)(
+	using Enumerate_DLL_Exports_Callback = bool (*)(
 		_In_opt_ T pContext,
 		_In_ ULONG nOrdinal,
 		_In_opt_ LPCSTR pszName,
@@ -77,9 +80,9 @@ namespace win32
 		Enumerate_DLL_Exports_Callback<T> pfExport)
 	{
 		auto RvaAdjust = [](_Pre_notnull_ PIMAGE_DOS_HEADER pDosHeader, _In_ DWORD raddr) -> PBYTE
-		{
-			return raddr != 0 ? ((PBYTE)pDosHeader) + raddr : nullptr;
-		};
+			{
+				return raddr != 0 ? ((PBYTE)pDosHeader) + raddr : nullptr;
+			};
 
 		if (pfExport == nullptr)
 		{
