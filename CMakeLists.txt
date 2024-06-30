@@ -36,7 +36,7 @@ set(sources
 add_library(Basic++ STATIC ${headers} ${sources})
 add_library(Basic++::Basic++ ALIAS Basic++)
 
-target_compile_features(Basic++ PUBLIC cxx_std_20)
+target_compile_features(Basic++ PUBLIC cxx_std_23)
 
 target_link_libraries(Basic++ PUBLIC dbghelp)
 

@@ -43,11 +43,13 @@ namespace Basic::Expectations
         {
             // am I playing with fire here?
             #ifndef NO_EXPECTATIONS
-            if (Basic::Expectations::Expect((this->operator bool()), status, sl))
+            if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
                 return value;
             BASIC_DEBUG_BREAK();
             std::exit(EXIT_FAILURE);
+            std::unreachable();
             #else
+            
             return value;
             #endif
         }
@@ -70,7 +72,7 @@ namespace Basic::Expectations
 
         Expected(T& _value) : value(std::move(_value)) {}
 
-        Expected(T& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {} 
+        Expected(T& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {}
 
         Expected(ConstStringReference msg) : value(T{}), status(msg) {}
 
@@ -80,10 +82,11 @@ namespace Basic::Expectations
         {
             // am I playing with fire here?
             #ifndef NO_EXPECTATIONS
-            if (Basic::Expectations::Expect((this->operator bool()), status, sl))
+            if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
                 return value;
             BASIC_DEBUG_BREAK();
             std::exit(EXIT_FAILURE);
+            std::unreachable();
             #else
             return value;
             #endif
