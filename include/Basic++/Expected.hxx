@@ -36,16 +36,57 @@ namespace Basic::Expectations
 
         Expected(ConstStringReference msg) : value(T{}), status(msg) {}
 
-        T* operator->() { return &value; } // FIXME: this prohbits refernces types from being in an expected.
+        T* operator->() { return &value; }
         T& operator* () { return value; }
 
-        auto expect(std::source_location sl = std::source_location::current()) -> T&
+        inline auto expect(std::source_location sl = std::source_location::current()) -> T&
         {
+            // am I playing with fire here?
+            #ifndef NO_EXPECTATIONS
             if (Basic::Expectations::Expect((this->operator bool()), status, sl))
                 return value;
-
             BASIC_DEBUG_BREAK();
             std::exit(EXIT_FAILURE);
+            #else
+            return value;
+            #endif
+        }
+
+        constexpr operator bool() const { return status[0] == '^'; }
+    };
+
+    template<typename T>
+    struct Expected<T&>
+    {
+        using Type = T;
+
+        using ConstStringReference = char const(&)[];
+
+        T value;
+
+        ConstStringReference status = "^(AOK)";
+
+        Expected() = default;
+
+        Expected(T& _value) : value(std::move(_value)) {}
+
+        Expected(T& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {} 
+
+        Expected(ConstStringReference msg) : value(T{}), status(msg) {}
+
+        T& operator* () { return value; }
+
+        inline auto expect(std::source_location sl = std::source_location::current()) -> T&
+        {
+            // am I playing with fire here?
+            #ifndef NO_EXPECTATIONS
+            if (Basic::Expectations::Expect((this->operator bool()), status, sl))
+                return value;
+            BASIC_DEBUG_BREAK();
+            std::exit(EXIT_FAILURE);
+            #else
+            return value;
+            #endif
         }
 
         constexpr operator bool() const { return status[0] == '^'; }

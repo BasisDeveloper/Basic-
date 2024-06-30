@@ -4,20 +4,45 @@ using namespace Basic::Printing;
 #include "Basic++/Expected.hxx"
 using namespace Basic::Expectations;
 
-auto Dummy(int v) -> Expected<int>
+auto An_Expected_Of_Int(int v) -> Expected<int>
 {
     if (v > 5)
-        return { "bruh, v too big, bruh." };
+        return { __FUNCTION__ };
     return 5;
+}
+
+auto An_Expected_Of_Const_Int_Reference(const int& v) -> Expected<decltype(v)>
+{
+    if (v > 5)
+        return { __FUNCTION__ };
+    return v;
+}
+
+auto An_Expected_Of_Newed_Int_Reference(int v) -> Expected<int&>
+{
+    if (v > 5)
+        return { __FUNCTION__ };
+
+    int* new_int = new int {v};
+
+    return *new_int;
 }
 
 int main()
 {
     Println("Hello, From Sandbox.exe!");
 
-    Println(Dummy(5).expect());
+    Println(An_Expected_Of_Int(5).expect());
 
-    Println(Dummy(6).expect());
+    int integer_to_referenced = 5;
+
+    Println(An_Expected_Of_Const_Int_Reference(integer_to_referenced).expect());
+
+    Println(An_Expected_Of_Newed_Int_Reference(5).expect());
+
+    Println(An_Expected_Of_Int(6).expect());
+
+    std::unreachable();
 
     Println("Bye, bye, from Sandbox.exe!");
 }
