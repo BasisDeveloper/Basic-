@@ -108,3 +108,5 @@ export(EXPORT Basic++Targets
     FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/Basic++Targets.cmake"
     NAMESPACE Basic++::
 )
+
+add_subdirectory(Sandbox/)

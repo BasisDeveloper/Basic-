@@ -9,6 +9,15 @@
 namespace Basic::Expectations
 {
     template<typename T = void>
+    struct Expected;
+} // FIXME: this is terrible, I hate this.
+// the Basic++/Expectations.hxx header depends on us, be we also depend on them... gosh...
+
+#include "Basic++/Expectations.hxx"
+
+namespace Basic::Expectations
+{
+    template<typename T>
     struct Expected
     {
         using Type = T;
@@ -16,10 +25,6 @@ namespace Basic::Expectations
         using ConstStringReference = char const(&)[];
 
         T value;
-
-        /* this lambda makes it where you don't have to
-           call `status()`, but instead use `status` as a `const` variable. */
-        // const char* status = [&]() { return status[0] == '^' ? status + 1 : status;}();
 
         ConstStringReference status = "^(AOK)";
 
@@ -29,8 +34,19 @@ namespace Basic::Expectations
 
         Expected(T&& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {}
 
-        T* operator->() { return &value; }
+        Expected(ConstStringReference msg) : value(T{}), status(msg) {}
+
+        T* operator->() { return &value; } // FIXME: this prohbits refernces types from being in an expected.
         T& operator* () { return value; }
+
+        auto expect(std::source_location sl = std::source_location::current()) -> T&
+        {
+            if (Basic::Expectations::Expect((this->operator bool()), status, sl))
+                return value;
+
+            BASIC_DEBUG_BREAK();
+            std::exit(EXIT_FAILURE);
+        }
 
         constexpr operator bool() const { return status[0] == '^'; }
     };
@@ -90,5 +106,5 @@ namespace Basic::Expectations
         constexpr operator bool() const { return status[0] == '^' or value == true; }
     };
 
-    using Err = Expected<void>;
+    using Err = Expected<bool>;
 }

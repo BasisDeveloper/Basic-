@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.27)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin)
+
+project(Basic++.Sandbox
+    VERSION 0.0
+    LANGUAGES CXX)
+
+set(HEADERS
+)
+
+set(SOURCES
+    Sandbox.cpp
+)
+
+add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
+
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE Basic++::Basic++)

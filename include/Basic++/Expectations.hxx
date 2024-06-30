@@ -7,6 +7,7 @@
 #include "Basic++/Message.hxx"
 #include "Basic++/Expected.hxx"
 
+
 // TODO: This should be here, but it's easy to remove once it REALLY doesn't need to be here... so.
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>
@@ -25,19 +26,19 @@ namespace Basic
             const std::source_location& source_location = std::source_location::current())
         {
             if (!condition) [[unlikely]]
-                {
-                    Basic::Printing::Print("expectation not satisfied : '{}'", msg.string.data());
+            {
+                Basic::Printing::Print("expectation not satisfied : '{}'", msg.string.data());
 
-                    const auto file_name =
-                        std::filesystem::path(source_location.file_name()).filename().string();
+                const auto file_name =
+                    std::filesystem::path(source_location.file_name()).filename().string();
 
-                    const char* function_name = source_location.function_name();
+                const char* function_name = source_location.function_name();
 
-                    Basic::Printing::Println(" ~ file:'{}', function:'{}', line:'{}:{}'",
-                        file_name.data(), function_name, source_location.line(), source_location.column());
-                }
+                Basic::Printing::Println(" ~ file:'{}', function:'{}', line:'{}:{}'",
+                    file_name.data(), function_name, source_location.line(), source_location.column());
+            }
 
-                return condition;
+            return condition;
         }
 
         template<typename T>
