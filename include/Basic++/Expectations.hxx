@@ -7,7 +7,6 @@
 #include "Basic++/Message.hxx"
 #include "Basic++/Expected.hxx"
 
-
 // TODO: This should be here, but it's easy to remove once it REALLY doesn't need to be here... so.
 #define WIN32_MEAN_AND_LEAN
 #include <Windows.h>

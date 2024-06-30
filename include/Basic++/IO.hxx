@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdio>
 #include <cstddef>
-#include "Basic++/Expectations.hxx"
 #include "Basic++/Expected.hxx"
 
 /* Why would you use this header file instead of just writing traditional manual file I/O?

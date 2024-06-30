@@ -5,7 +5,7 @@ if (TARGET Basic++)
 endif()
 
 project(Basic++
-    VERSION 2.0.0
+    VERSION 2.0.1
     LANGUAGES CXX
     HOMEPAGE_URL https://github.com/BasisDeveloper/BasicPlusPlus)
 
@@ -26,6 +26,7 @@ set(headers
     ${include_dir}/win32/Win32.hpp
     ${include_dir}/IO.hxx
     ${include_dir}/Expected.hxx
+    ${include_dir}/Expected.txx
 )
 
 set(sources
@@ -69,6 +70,7 @@ install(
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/
     FILES_MATCHING
     PATTERN "*.hxx"
+    PATTERN "*.txx"
     PATTERN "*.hpp"
     PATTERN "*.h")
 
