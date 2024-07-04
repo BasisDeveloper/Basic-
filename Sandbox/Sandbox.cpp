@@ -1,8 +1,10 @@
-#include "Basic++/Printing.hxx"
-using namespace Basic::Printing;
+#include "Basic++/Expectations.hxx"
+using namespace Basic::Expectations;
 
 #include "Basic++/Expected.hxx"
-using namespace Basic::Expectations;
+
+#include "Basic++/Printing.hxx"
+using namespace Basic::Printing;
 
 auto An_Expected_Of_Int(int v) -> Expected<int>
 {

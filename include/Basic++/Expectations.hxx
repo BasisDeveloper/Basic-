@@ -5,7 +5,29 @@
 
 #include "Basic++/Printing.hxx"
 #include "Basic++/Message.hxx"
-#include "Basic++/Expected.hxx"
+
+
+namespace Basic::Expectations 
+{
+  template<typename T>
+  struct Expected;
+}
+
+namespace Basic
+{
+    namespace Expectations
+    {
+        bool Expect(
+            bool condition,
+            const Message&& msg,
+            const std::source_location& source_location = std::source_location::current());
+
+        template<typename T>
+        bool Expect(
+            Expected<T> expected,
+            const std::source_location& source_location = std::source_location::current());
+    }
+}
 
 // TODO: This should be here, but it's easy to remove once it REALLY doesn't need to be here... so.
 #define WIN32_MEAN_AND_LEAN
@@ -15,14 +37,17 @@
 // Later on, we should use a modified version of https://github.com/scottt/debugbreak.
 #define BASIC_DEBUG_BREAK() DebugBreak();
 
+// this header relies on this file
+#include "Basic++/Expected.hxx"
+
 namespace Basic
 {
     namespace Expectations
     {
-        static bool Expect(
+        bool Expect(
             bool condition,
             const Message&& msg,
-            const std::source_location& source_location = std::source_location::current())
+            const std::source_location& source_location)
         {
             if (!condition) [[unlikely]]
             {
@@ -43,12 +68,12 @@ namespace Basic
         template<typename T>
         bool Expect(
             Expected<T> expected,
-            const std::source_location& source_location = std::source_location::current())
+            const std::source_location& source_location)
         {
             return Expect(expected == true, Message{ expected.status }, source_location);
         }
+        }
     }
-}
 
 #ifndef NO_EXPECTATIONS
 

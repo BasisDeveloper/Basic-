@@ -26,7 +26,6 @@ set(headers
     ${include_dir}/win32/Win32.hpp
     ${include_dir}/IO.hxx
     ${include_dir}/Expected.hxx
-    ${include_dir}/Expected.txx
 )
 
 set(sources
