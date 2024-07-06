@@ -25,7 +25,7 @@ auto An_Expected_Of_Newed_Int_Reference(int v) -> Expected<int&>
     if (v > 5)
         return { __FUNCTION__ };
 
-    int* new_int = new int {v};
+    int* new_int = new int{ v };
 
     return *new_int;
 }
@@ -42,9 +42,11 @@ int main()
 
     Println(An_Expected_Of_Newed_Int_Reference(5).expect());
 
-    Println(An_Expected_Of_Int(6).expect());
+    integer_to_referenced = 10;
 
-    std::unreachable();
+    *An_Expected_Of_Const_Int_Reference(integer_to_referenced);
+
+    Println(An_Expected_Of_Int(6).expect());
 
     Println("Bye, bye, from Sandbox.exe!");
 }

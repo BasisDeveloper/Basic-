@@ -44,11 +44,20 @@ namespace Basic::Expectations
         // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
       if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
+      {
         return value;
+      }
+      else
+      {
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
         BASIC_DEBUG_BREAK();
+
         std::exit(EXIT_FAILURE);
-        std::unreachable();
-        #else
+      }
+      #else
 
       return value;
       #endif
@@ -60,34 +69,59 @@ namespace Basic::Expectations
   template<typename T>
   struct Expected<T&>
   {
+  private:
+    constexpr static T _null_T = {};
+
+  public:
     using Type = T;
 
     using ConstStringReference = char const(&)[];
 
-    T value;
+    T& value;
 
     ConstStringReference status = "^(AOK)";
 
     Expected() = default;
 
-    Expected(T& _value) : value(std::move(_value)) {}
+    Expected(T& _value) : value(_value) {}
 
-    Expected(T& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {}
+    Expected(T& _value, ConstStringReference msg) : value(_value), status(msg) {}
 
-    Expected(ConstStringReference msg) : value(T{}), status(msg) {}
+    // yes, this is undefined behavior, yes, I mean to do it.
+    // Expected(ConstStringReference msg) : value(reinterpret_cast<T&>(*(T*)-1)), status(msg) {}
 
-    T& operator* () { return value; }
+    // even if we fail we MUST initialize `value` to something, so this is my solution.
+    // if the user receives a Expected that has a failure value, then they should dereference.
+    Expected(ConstStringReference msg) : value(const_cast<T&>(_null_T)), status(msg) {}
+
+    T& operator* ()
+    {
+      EXPECT((this->operator bool()) == true,
+        "you mustn't dereference an invalid Expected<T> that contains a reference.");
+
+      return value;
+    }
 
     inline auto expect(std::source_location sl = std::source_location::current()) -> T&
     {
         // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
       if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
+      {
         return value;
+      }
+      else
+      {
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
         BASIC_DEBUG_BREAK();
+
         std::exit(EXIT_FAILURE);
-        std::unreachable();
-        #else
+      }
+      #else
+
       return value;
       #endif
     }

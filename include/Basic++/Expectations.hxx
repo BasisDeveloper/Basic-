@@ -6,18 +6,17 @@
 #include "Basic++/Printing.hxx"
 #include "Basic++/Message.hxx"
 
-
-namespace Basic::Expectations 
+namespace Basic::Expectations
 {
-  template<typename T>
-  struct Expected;
+    template<typename T>
+    struct Expected;
 }
 
 namespace Basic
 {
     namespace Expectations
     {
-        bool Expect(
+        static bool Expect(
             bool condition,
             const Message&& msg,
             const std::source_location& source_location = std::source_location::current());
@@ -36,6 +35,38 @@ namespace Basic
 
 // Later on, we should use a modified version of https://github.com/scottt/debugbreak.
 #define BASIC_DEBUG_BREAK() DebugBreak();
+
+
+#ifndef NO_EXPECTATIONS
+
+#define EXPECT(_cond_, _msg_, ...)                                                                         \
+        if (!Basic::Expectations::Expect((_cond_), {_msg_, __VA_ARGS__}, std::source_location::current())) \
+		{		                                                                                           \
+            std::fflush(stdout);																           \
+			BASIC_DEBUG_BREAK();                                                                           \
+            std::exit(EXIT_FAILURE);									                                   \
+		} 																					               
+
+// E (Expected) Expect
+#define EEXPECT(_expected_)                                                                                           \
+[&]() {                                                                                                               \
+    auto expected = _expected_;                                                                                       \
+    auto expected_value = *expected;                                                                                  \
+    if (!Basic::Expectations::Expect<typename decltype(_expected_)::Type>(expected, std::source_location::current())) \
+    {                                                                                                                 \
+        std::fflush(stdout);																                          \
+        BASIC_DEBUG_BREAK();                                                                                          \
+        std::exit(EXIT_FAILURE);                                                                                      \
+    }                                                                                                                 \
+    return expected_value;\
+    }()
+
+#else
+
+#define EXPECT(_cond_, _msg_, ...)
+#define EEXPECT(_expected_) *_expected_
+
+#endif
 
 // this header relies on this file
 #include "Basic++/Expected.hxx"
@@ -72,34 +103,5 @@ namespace Basic
         {
             return Expect(expected == true, Message{ expected.status }, source_location);
         }
-        }
     }
-
-#ifndef NO_EXPECTATIONS
-
-#define EXPECT(_cond_, _msg_, ...)                                                                         \
-        if (!Basic::Expectations::Expect((_cond_), {_msg_, __VA_ARGS__}, std::source_location::current())) \
-		{																					               \
-			BASIC_DEBUG_BREAK();                                                                           \
-            std::exit(EXIT_FAILURE);									                                   \
-		} 																					               
-
-// E (Expected) Expect
-#define EEXPECT(_expected_)                                                                                           \
-[&]() {                                                                                                               \
-    auto expected = _expected_;                                                                                       \
-    auto expected_value = *expected;                                                                                  \
-    if (!Basic::Expectations::Expect<typename decltype(_expected_)::Type>(expected, std::source_location::current())) \
-    {                                                                                                                 \
-        BASIC_DEBUG_BREAK();                                                                                          \
-        std::exit(EXIT_FAILURE);                                                                                      \
-    }                                                                                                                 \
-    return expected_value;\
-    }()
-
-#else
-
-#define EXPECT(_cond_, _msg_, ...)
-#define EEXPECT(_expected_) *_expected_
-
-#endif
+}
