@@ -1,3 +1,5 @@
+#define NO_EXPECTATIONS
+
 #include "Basic++/Expectations.hxx"
 using namespace Basic::Expectations;
 
@@ -20,6 +22,13 @@ auto An_Expected_Of_Const_Int_Reference(const int& v) -> Expected<decltype(v)>
     return v;
 }
 
+auto An_Expected_Of_Int_Reference(int& v) -> Expected<decltype(v)>
+{
+    if (v > 5)
+        return { __FUNCTION__ };
+    return v;
+}
+
 auto An_Expected_Of_Newed_Int_Reference(int v) -> Expected<int&>
 {
     if (v > 5)
@@ -30,8 +39,11 @@ auto An_Expected_Of_Newed_Int_Reference(int v) -> Expected<int&>
     return *new_int;
 }
 
+
 int main()
 {
+    Println("{}", sizeof(Expected<int>));
+
     Println("Hello, From Sandbox.exe!");
 
     Println(An_Expected_Of_Int(5).expect());
@@ -44,7 +56,9 @@ int main()
 
     integer_to_referenced = 10;
 
-    *An_Expected_Of_Const_Int_Reference(integer_to_referenced);
+    auto& invalid_ref =*An_Expected_Of_Int_Reference(integer_to_referenced);
+
+    invalid_ref = 4;
 
     Println(An_Expected_Of_Int(6).expect());
 

@@ -36,8 +36,22 @@ namespace Basic::Expectations
 
     Expected(ConstStringReference msg) : value(T{}), status(msg) {}
 
-    T* operator->() { return &value; }
-    T& operator* () { return value; }
+    T* operator->()
+    {
+      EXPECT((this->operator bool()) == true,
+        "you mustn't dereference an invalid Expected<T>, "
+        "or any other kind for that matter.");
+
+      return &value;
+    }
+
+    T& operator* ()
+    {
+      EXPECT((this->operator bool()) == true,
+        "you mustn't dereference an invalid Expected<T>, "
+        "or any other kind for that matter.");
+      return value;
+    }
 
     inline auto expect(std::source_location sl = std::source_location::current()) -> T&
     {
@@ -69,9 +83,6 @@ namespace Basic::Expectations
   template<typename T>
   struct Expected<T&>
   {
-  private:
-    constexpr static T _null_T = {};
-
   public:
     using Type = T;
 
@@ -88,16 +99,16 @@ namespace Basic::Expectations
     Expected(T& _value, ConstStringReference msg) : value(_value), status(msg) {}
 
     // yes, this is undefined behavior, yes, I mean to do it.
-    // Expected(ConstStringReference msg) : value(reinterpret_cast<T&>(*(T*)-1)), status(msg) {}
-
     // even if we fail we MUST initialize `value` to something, so this is my solution.
-    // if the user receives a Expected that has a failure value, then they should dereference.
-    Expected(ConstStringReference msg) : value(const_cast<T&>(_null_T)), status(msg) {}
+    // if the user receives an Expected that has a failure value, then they shouldn't dereference
+    // it anyway, if they do, they'll recieved an expection for their carelessness.
+    Expected(ConstStringReference msg) : value(reinterpret_cast<T&>(*(T*)-0)), status(msg) {}
 
     T& operator* ()
     {
       EXPECT((this->operator bool()) == true,
-        "you mustn't dereference an invalid Expected<T> that contains a reference.");
+        "you mustn't dereference an invalid Expected<T&>, "
+        "or any other kind for that matter.");
 
       return value;
     }
@@ -166,15 +177,18 @@ namespace Basic::Expectations
 
     using ConstStringReference = char const(&)[];
 
+    constexpr static const char AOK[7] = "^(AOK)";
+    constexpr static const char NOK[7] = "!(NOK)";
+
     const bool value = false;
 
-    ConstStringReference status = "^(AOK)";
+    ConstStringReference status = AOK;
 
     Expected() = default;
 
     Expected(ConstStringReference msg) :status(msg) {}
 
-    Expected(bool&& _value) : value(_value) {}
+    Expected(bool&& _value) : value(_value), status((_value == true ? AOK : NOK)) {}
 
     Expected(bool&& _value, ConstStringReference msg) : value(_value), status(msg) {}
 
