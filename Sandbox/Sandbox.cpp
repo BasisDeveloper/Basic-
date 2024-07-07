@@ -1,4 +1,4 @@
-#define NO_EXPECTATIONS
+// #define NO_EXPECTATIONS
 
 #include "Basic++/Expectations.hxx"
 using namespace Basic::Expectations;

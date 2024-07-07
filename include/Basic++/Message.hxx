@@ -23,5 +23,17 @@ namespace Basic
         {
             string = Basic::Formatting::Format(msg);
         }
+
+        constexpr Message(const char*& msg)
+        {
+            string = Basic::Formatting::Format(msg);
+        }
+
+        template<typename ...T>
+        constexpr Message(const char*& msg, T&& ...args)
+        {
+            if constexpr (sizeof...(args) > 0)
+                string = Basic::Formatting::Format(msg, args...);
+        }
     };
 }

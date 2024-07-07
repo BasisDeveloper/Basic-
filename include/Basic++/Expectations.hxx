@@ -77,6 +77,10 @@ namespace Basic
     {
         bool Expect(
             bool condition,
+            // FIXME: this is bad, every single time we call this function, even if it "succeeds"
+            //        the Message class performs format on the string given. We don't need it 
+            //        to do that if the function succeeds, right? Because the msg is only for failures.
+            //        well, most of the time.
             const Message&& msg,
             const std::source_location& source_location)
         {

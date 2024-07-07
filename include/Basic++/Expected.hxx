@@ -24,17 +24,25 @@ namespace Basic::Expectations
 
     using ConstStringReference = char const(&)[];
 
-    T value;
+    constexpr static const char AOK[7] = "^(AOK)";
+    constexpr static const char NOK[7] = "!(NOK)";
 
-    ConstStringReference status = "^(AOK)";
+    union
+    {
+      T value{};
+      const char* status;
+    };
 
     Expected() = default;
 
-    Expected(T&& _value) : value(std::move(_value)) {}
+    Expected(T&& _value) : value(std::move(_value))
+    {
+      printf("%d", _value);
+    }
 
-    Expected(T&& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {}
+    // Expected(T&& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {}
 
-    Expected(ConstStringReference msg) : value(T{}), status(msg) {}
+    Expected(ConstStringReference msg) : status(msg) {}
 
     T* operator->()
     {
@@ -57,27 +65,37 @@ namespace Basic::Expectations
     {
         // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
-      if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
-      {
-        return value;
+      if (!(this->operator bool()))
+      { // this if condition is not by accident we must do it first, otherwise the
+        // `Expect` function below because will pack up the status string, 
+        //  run Basic::Formatting::Format on it which may call a crash
+        //  because the status string may point to non-sense. This is 
+        //  technically a problem.
+        if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
+        {
+          return value;
+        }
+        else
+        {
+          // before we debug break we want to dump anything buffered 
+          // we have in stdout so the user can see whatever is in there.
+          std::fflush(stdout);
+
+          BASIC_DEBUG_BREAK();
+
+          std::exit(EXIT_FAILURE);
+        }
       }
       else
       {
-        // before we debug break we want to dump anything buffered 
-        // we have in stdout so the user can see whatever is in there.
-        std::fflush(stdout);
-
-        BASIC_DEBUG_BREAK();
-
-        std::exit(EXIT_FAILURE);
+        return value;
       }
       #else
-
       return value;
       #endif
     }
 
-    constexpr operator bool() const { return status[0] == '^'; }
+    constexpr operator bool() const { return (status != AOK); }
   };
 
   template<typename T>
