@@ -5,7 +5,7 @@ if (TARGET Basic++)
 endif()
 
 project(Basic++
-    VERSION 2.0.1
+    VERSION 2.1.1
     LANGUAGES CXX
     HOMEPAGE_URL https://github.com/BasisDeveloper/BasicPlusPlus)
 

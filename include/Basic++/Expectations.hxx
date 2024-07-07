@@ -105,7 +105,7 @@ namespace Basic
             Expected<T> expected,
             const std::source_location& source_location)
         {
-            return Expect(expected == true, Message{ expected.status }, source_location);
+            return Expect(expected == true, Message{ expected.status() }, source_location);
         }
     }
 }

@@ -17,32 +17,43 @@ namespace Basic::Expectations {
 
 namespace Basic::Expectations
 {
+  using ConstStringReference = char const(&)[];
+
+  static ConstStringReference AOK = "^(AOK)";
+
   template<typename T>
   struct Expected
   {
+  private:
+    T _value;
+    // const char* const _status_ptr = AOK;
+    ConstStringReference _status_ptr = AOK;
+
+  public:
     using Type = T;
 
-    using ConstStringReference = char const(&)[];
-
-    constexpr static const char AOK[7] = "^(AOK)";
-    constexpr static const char NOK[7] = "!(NOK)";
-
-    union
+    inline ConstStringReference status() const
     {
-      T value{};
-      const char* status;
-    };
+      return _status_ptr;
+    }
+
+    inline const T& value() const
+    {
+      return _value;
+    }
+
+    inline T& value()
+    {
+      return _value;
+    }
 
     Expected() = default;
 
-    Expected(T&& _value) : value(std::move(_value))
-    {
-      printf("%d", _value);
-    }
+    Expected(T&& _value) : _value(std::move(_value)) {}
 
-    // Expected(T&& _value, ConstStringReference msg) :value(std::move(_value)), status(msg) {}
+    Expected(T&& _value, ConstStringReference msg) : _value(std::move(_value)), _status_ptr(msg) {}
 
-    Expected(ConstStringReference msg) : status(msg) {}
+    Expected(ConstStringReference msg) : _status_ptr(msg) {}
 
     T* operator->()
     {
@@ -50,7 +61,7 @@ namespace Basic::Expectations
         "you mustn't dereference an invalid Expected<T>, "
         "or any other kind for that matter.");
 
-      return &value;
+      return &_value;
     }
 
     T& operator* ()
@@ -58,89 +69,24 @@ namespace Basic::Expectations
       EXPECT((this->operator bool()) == true,
         "you mustn't dereference an invalid Expected<T>, "
         "or any other kind for that matter.");
-      return value;
+      return _value;
     }
 
-    inline auto expect(std::source_location sl = std::source_location::current()) -> T&
-    {
-        // am I playing with fire here?
-      #ifndef NO_EXPECTATIONS
-      if (!(this->operator bool()))
-      { // this if condition is not by accident we must do it first, otherwise the
-        // `Expect` function below because will pack up the status string, 
-        //  run Basic::Formatting::Format on it which may call a crash
-        //  because the status string may point to non-sense. This is 
-        //  technically a problem.
-        if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
-        {
-          return value;
-        }
-        else
-        {
-          // before we debug break we want to dump anything buffered 
-          // we have in stdout so the user can see whatever is in there.
-          std::fflush(stdout);
-
-          BASIC_DEBUG_BREAK();
-
-          std::exit(EXIT_FAILURE);
-        }
-      }
-      else
-      {
-        return value;
-      }
-      #else
-      return value;
-      #endif
-    }
-
-    constexpr operator bool() const { return (status != AOK); }
-  };
-
-  template<typename T>
-  struct Expected<T&>
-  {
-  public:
-    using Type = T;
-
-    using ConstStringReference = char const(&)[];
-
-    T& value;
-
-    ConstStringReference status = "^(AOK)";
-
-    Expected() = default;
-
-    Expected(T& _value) : value(_value) {}
-
-    Expected(T& _value, ConstStringReference msg) : value(_value), status(msg) {}
-
-    // yes, this is undefined behavior, yes, I mean to do it.
-    // even if we fail we MUST initialize `value` to something, so this is my solution.
-    // if the user receives an Expected that has a failure value, then they shouldn't dereference
-    // it anyway, if they do, they'll recieved an expection for their carelessness.
-    Expected(ConstStringReference msg) : value(reinterpret_cast<T&>(*(T*)-0)), status(msg) {}
-
-    T& operator* ()
+    const T& operator* () const
     {
       EXPECT((this->operator bool()) == true,
-        "you mustn't dereference an invalid Expected<T&>, "
+        "you mustn't dereference an invalid Expected<T>, "
         "or any other kind for that matter.");
-
-      return value;
+      return _value;
     }
 
     inline auto expect(std::source_location sl = std::source_location::current()) -> T&
     {
         // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
-      if (Basic::Expectations::Expect((this->operator bool()), status, sl)) [[likely]]
+      if (!(this->operator bool())) [[likely]]
       {
-        return value;
-      }
-      else
-      {
+        Basic::Expectations::Expect(false, _status_ptr, sl);
         // before we debug break we want to dump anything buffered 
         // we have in stdout so the user can see whatever is in there.
         std::fflush(stdout);
@@ -149,13 +95,128 @@ namespace Basic::Expectations
 
         std::exit(EXIT_FAILURE);
       }
+      else
+      {
+        return _value;
+      }
       #else
-
       return value;
       #endif
     }
 
-    constexpr operator bool() const { return status[0] == '^'; }
+    inline auto expect(std::source_location sl = std::source_location::current()) const -> const T&
+    {
+         // am I playing with fire here?
+      #ifndef NO_EXPECTATIONS
+      if (!(this->operator bool())) [[likely]]
+      {
+        Basic::Expectations::Expect(false, _status_ptr, sl);
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
+        BASIC_DEBUG_BREAK();
+
+        std::exit(EXIT_FAILURE);
+      }
+      else
+      {
+        return _value;
+      }
+      #else
+      return value;
+      #endif
+    }
+
+    // for some silly reason I can't compare the pointers...
+    constexpr operator bool() const { return _status_ptr[0] == AOK[0]; }
+
+    ~Expected() {};
+  };
+
+  template<typename T>
+  struct Expected<T&>
+  {
+  private:
+    ConstStringReference _status = AOK;
+    T& _value;
+  public:
+    using Type = T;
+
+    ConstStringReference status() const { return _status; }
+
+    auto value() -> T& { return _value; }
+
+    Expected() = default;
+
+    Expected(T& _value) : _value(_value) {}
+
+    Expected(T& _value, ConstStringReference msg) : _value(_value), _status(msg) {}
+
+    // yes, this is undefined behavior, yes, I mean to do it.
+    // even if we fail we MUST initialize `value` to something, so this is my solution.
+    // if the user receives an Expected that has a failure value, then they shouldn't dereference
+    // it anyway, if they do, they'll recieved an expection for their carelessness.
+    Expected(ConstStringReference msg) : _value(reinterpret_cast<T&>(*(T*)-0)), _status(msg) {}
+
+    T& operator* ()
+    {
+      EXPECT((this->operator bool()) == true,
+        "you mustn't dereference an invalid Expected<T&>, "
+        "or any other kind for that matter.");
+
+      return _value;
+    }
+
+    inline auto expect(std::source_location sl = std::source_location::current()) -> T&
+    {
+        // am I playing with fire here?
+      #ifndef NO_EXPECTATIONS
+      if (!(this->operator bool())) [[likely]]
+      {
+        Basic::Expectations::Expect(false, _status, sl);
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
+        BASIC_DEBUG_BREAK();
+
+        std::exit(EXIT_FAILURE);
+      }
+      else
+      {
+        return _value;
+      }
+      #else
+      return value;
+      #endif
+    }
+
+    inline auto expect(std::source_location sl = std::source_location::current()) const -> const T&
+    {
+      // am I playing with fire here?
+      #ifndef NO_EXPECTATIONS
+      if (!(this->operator bool())) [[likely]]
+      {
+        Basic::Expectations::Expect(false, _status, sl);
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
+        BASIC_DEBUG_BREAK();
+
+        std::exit(EXIT_FAILURE);
+      }
+      else
+      {
+        return _value;
+      }
+      #else
+      return value;
+      #endif
+    }
+
+    constexpr operator bool() const { return _status[0] == AOK[0]; }
   };
 
   /*
@@ -166,17 +227,18 @@ namespace Basic::Expectations
   template<>
   struct Expected<void>
   {
+  private:
+    ConstStringReference _status = AOK;
+  public:
     using Type = void;
 
-    using ConstStringReference = char const(&)[];
-
-    ConstStringReference status = "^(AOK)";
+    ConstStringReference status() const { return _status; }
 
     Expected() = default;
 
-    Expected(ConstStringReference msg) : status(msg) {}
+    Expected(ConstStringReference msg) : _status(msg) {}
 
-    constexpr operator bool() const { return status[0] == '^'; }
+    constexpr operator bool() const { return _status[0] == AOK[0]; }
   };
 
   /*
@@ -191,29 +253,30 @@ namespace Basic::Expectations
   template<>
   struct Expected<bool>
   {
+  private:
+    const bool _value = false;
+    ConstStringReference _status = AOK;
+  public:
     using Type = bool;
 
     using ConstStringReference = char const(&)[];
 
-    constexpr static const char AOK[7] = "^(AOK)";
-    constexpr static const char NOK[7] = "!(NOK)";
+    const bool& value() { return _value; }
 
-    const bool value = false;
-
-    ConstStringReference status = AOK;
+    ConstStringReference status() const { return _status; }
 
     Expected() = default;
 
-    Expected(ConstStringReference msg) :status(msg) {}
+    Expected(ConstStringReference msg) : _status(msg) {}
 
-    Expected(bool&& _value) : value(_value), status((_value == true ? AOK : NOK)) {}
+    Expected(bool&& _value) : _value(_value) {}
 
-    Expected(bool&& _value, ConstStringReference msg) : value(_value), status(msg) {}
+    Expected(bool&& _value, ConstStringReference msg) : _value(_value), _status(msg) {}
 
-    const bool* operator->() { return &value; }
-    const bool& operator* () { return value; }
+    const bool* operator->() { return &value(); }
+    const bool& operator* () { return value(); }
 
-    constexpr operator bool() const { return status[0] == '^' or value == true; }
+    constexpr operator bool() const { return +_status == +AOK; }
   };
 
   using Err = Expected<bool>;
