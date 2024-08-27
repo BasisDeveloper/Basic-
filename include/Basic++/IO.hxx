@@ -14,7 +14,7 @@ namespace Basic::IO
     enum class FileWriteOptions : std::uint8_t { WriteReplace, WriteAppend };
     enum class FileReadOptions : std::uint8_t { ReadOSNative, ReadBinary };
 
-    Err Write_File(
+    static Err Write_File(
         const std::string_view& file_path,
         const std::string& to_write,
         FileWriteOptions options = FileWriteOptions::WriteReplace,
@@ -50,7 +50,7 @@ namespace Basic::IO
         return true;
     }
 
-    Err Write_File(
+    static Err Write_File(
         const std::string_view& file_path,
         const char* to_write,
         std::size_t to_write_size,
@@ -87,7 +87,7 @@ namespace Basic::IO
         return true;
     }
 
-    Expected<std::string> Read_File(
+    static Expected<std::string> Read_File(
         const std::string_view& file_path,
         FileReadOptions options = FileReadOptions::ReadBinary)
     {

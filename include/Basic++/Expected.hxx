@@ -276,7 +276,7 @@ namespace Basic::Expectations
     const bool* operator->() { return &value(); }
     const bool& operator* () { return value(); }
 
-    constexpr operator bool() const { return +_status == +AOK; }
+    constexpr operator bool() const { return _status[0] == AOK[0]; }
   };
 
   using Err = Expected<bool>;
