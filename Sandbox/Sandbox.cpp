@@ -101,6 +101,16 @@ auto An_Expected_Of_A_Non_Trival_Type_Ref(NTT& n) -> Expected<NTT&>
     return n;
 }
 
+static_assert(sizeof(Expected<int>) == 16);
+static_assert(sizeof(Expected<int&>) == 16);
+static_assert(sizeof(Expected<int*>) == 16);
+static_assert(sizeof(Expected<bool>) == 16);
+
+auto some_bool_fn() -> Err
+{
+    return false;
+}
+
 int main()
 {
     #if 0
@@ -155,6 +165,17 @@ int main()
 
         if (!expected_ntt)
             Println(expected_ntt.status());
+    }
+
+    {
+        auto rtnv = some_bool_fn();
+
+        rtnv.expect();
+
+        if (!rtnv)
+        {
+            Println("`some_bool_fn` failed with status '{}'", rtnv.status());
+        }
     }
 
     Println("Bye, bye, from Sandbox.exe!");

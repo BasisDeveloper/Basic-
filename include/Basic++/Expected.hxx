@@ -32,17 +32,17 @@ namespace Basic::Expectations
   public:
     using Type = T;
 
-    inline ConstStringReference status() const
+    [[nodiscard]] inline ConstStringReference status() const
     {
       return _status_ptr;
     }
 
-    inline const T& value() const
+    [[nodiscard]] inline const T& value() const
     {
       return _value;
     }
 
-    inline T& value()
+    [[nodiscard]] inline T& value()
     {
       return _value;
     }
@@ -55,7 +55,7 @@ namespace Basic::Expectations
 
     Expected(ConstStringReference msg) : _status_ptr(msg) {}
 
-    T* operator->()
+    [[nodiscard]] T* operator->()
     {
       EXPECT((this->operator bool()) == true,
         "you mustn't dereference an invalid Expected<T>, "
@@ -64,7 +64,7 @@ namespace Basic::Expectations
       return &_value;
     }
 
-    T& operator* ()
+    [[nodiscard]] T& operator* ()
     {
       EXPECT((this->operator bool()) == true,
         "you mustn't dereference an invalid Expected<T>, "
@@ -72,7 +72,7 @@ namespace Basic::Expectations
       return _value;
     }
 
-    const T& operator* () const
+    [[nodiscard]] const T& operator* () const
     {
       EXPECT((this->operator bool()) == true,
         "you mustn't dereference an invalid Expected<T>, "
@@ -80,7 +80,7 @@ namespace Basic::Expectations
       return _value;
     }
 
-    inline auto expect(std::source_location sl = std::source_location::current()) -> T&
+    [[nodiscard]] inline auto expect(std::source_location sl = std::source_location::current()) -> T&
     {
         // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
@@ -104,7 +104,7 @@ namespace Basic::Expectations
       #endif
     }
 
-    inline auto expect(std::source_location sl = std::source_location::current()) const -> const T&
+    [[nodiscard]] inline auto expect(std::source_location sl = std::source_location::current()) const -> const T&
     {
          // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
@@ -159,7 +159,7 @@ namespace Basic::Expectations
     // it anyway, if they do, they'll recieved an expection for their carelessness.
     Expected(ConstStringReference msg) : _value(reinterpret_cast<T&>(*(T*)-0)), _status(msg) {}
 
-    T& operator* ()
+    [[nodiscard]] T& operator* ()
     {
       EXPECT((this->operator bool()) == true,
         "you mustn't dereference an invalid Expected<T&>, "
@@ -168,7 +168,7 @@ namespace Basic::Expectations
       return _value;
     }
 
-    inline auto expect(std::source_location sl = std::source_location::current()) -> T&
+    [[nodiscard]] inline auto expect(std::source_location sl = std::source_location::current()) -> T&
     {
         // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
@@ -192,7 +192,7 @@ namespace Basic::Expectations
       #endif
     }
 
-    inline auto expect(std::source_location sl = std::source_location::current()) const -> const T&
+    [[nodiscard]] inline auto expect(std::source_location sl = std::source_location::current()) const -> const T&
     {
       // am I playing with fire here?
       #ifndef NO_EXPECTATIONS
@@ -261,7 +261,7 @@ namespace Basic::Expectations
 
     using ConstStringReference = char const(&)[];
 
-    const bool& value() { return _value; }
+    [[nodiscard]] const bool& value() { return _value; }
 
     ConstStringReference status() const { return _status; }
 
@@ -273,10 +273,57 @@ namespace Basic::Expectations
 
     Expected(bool&& _value, ConstStringReference msg) : _value(_value), _status(msg) {}
 
-    const bool* operator->() { return &value(); }
     const bool& operator* () { return value(); }
 
     constexpr operator bool() const { return _status[0] == AOK[0]; }
+
+    inline auto expect(std::source_location sl = std::source_location::current()) -> const bool&
+    {
+        // am I playing with fire here?
+      #ifndef NO_EXPECTATIONS
+      if (!(this->operator bool())) [[likely]]
+      {
+        Basic::Expectations::Expect(false, _status, sl);
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
+        BASIC_DEBUG_BREAK();
+
+        std::exit(EXIT_FAILURE);
+      }
+      else
+      {
+        return _value;
+      }
+      #else
+      return value;
+      #endif
+    }
+
+    inline auto expect(std::source_location sl = std::source_location::current()) const -> const bool&
+    {
+      // am I playing with fire here?
+      #ifndef NO_EXPECTATIONS
+      if (!(this->operator bool())) [[likely]]
+      {
+        Basic::Expectations::Expect(false, _status, sl);
+        // before we debug break we want to dump anything buffered 
+        // we have in stdout so the user can see whatever is in there.
+        std::fflush(stdout);
+
+        BASIC_DEBUG_BREAK();
+
+        std::exit(EXIT_FAILURE);
+      }
+      else
+      {
+        return _value;
+      }
+      #else
+      return value;
+      #endif
+    }
   };
 
   using Err = Expected<bool>;
