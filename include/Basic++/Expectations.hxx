@@ -29,7 +29,7 @@ namespace Basic
 }
 
 // TODO: This should be here, but it's easy to remove once it REALLY doesn't need to be here... so.
-#define WIN32_MEAN_AND_LEAN
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <debugapi.h> // For DebugBreak()
 
